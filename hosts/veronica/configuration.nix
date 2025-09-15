@@ -1,7 +1,5 @@
 { config, pkgs, noctalia, ... }:
-let
-  lib = pkgs.lib;
-in
+
 {
   networking.hostName = "Veronica";
   networking.networkmanager.enable = true;
@@ -78,9 +76,9 @@ in
   hardware.steam-hardware.enable = true;
 
   # Caméra IPU6 (MateBook GT / Meteor Lake)
-  hardware.ipu6.enable = true;
-  hardware.ipu6.platform = "ipu6epmtl";
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  # hardware.ipu6.enable = true;
+  # hardware.ipu6.platform = "ipu6epmtl";
+  # boot.kernelPackages = pkgs.linuxPackages_latest;
 
   ################
   # Bureau       #
