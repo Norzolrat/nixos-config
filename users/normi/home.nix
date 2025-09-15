@@ -40,6 +40,7 @@ in
     obs-studio
     thunderbird
     onlyoffice-desktopeditors
+    virt-manager
     # zen-browser
   ];
 
