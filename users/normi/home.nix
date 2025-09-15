@@ -93,19 +93,17 @@ in
     force = true;
   };
   
-  home.file.".config/gtklock" = {
-    source = dots + "/gtklock";
-    recursive = true;
-    force = true;
-  };
+  # home.file.".config/gtklock" = {
+  #   source = dots + "/gtklock";
+  #   recursive = true;
+  #   force = true;
+  # };
   
   home.file.".config/wallpapers" = {
     source = dots + "/wallpapers";
     recursive = true;
     force = true;
   };
-
-  programs.kitty.enable = true;
   programs.alacritty.enable = true;
 }
 

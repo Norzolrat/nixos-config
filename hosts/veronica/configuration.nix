@@ -83,7 +83,9 @@
   # Bureau       #
   ################
   services.xserver.enable = true;
-  # services.displayManager.defaultSession = "hyprland";
+  services.displayManager.gdm.enable = true;
+  services.displayManager.gdm.wayland = true;
+  services.displayManager.defaultSession = "hyprland";
 
   # Hyprland
   programs.hyprland = {
@@ -153,21 +155,11 @@
   environment.systemPackages = with pkgs; [
     # basics
     bluez vim zsh git curl alacritty firefox nautilus
-    hyprland
     qt6.qtdeclarative qt6.qt5compat qt6.qtsvg
     noctalia.packages.${pkgs.system}.default
     # helpers
-    # pkgs.brightnessctl
-    # pkgs.ddcutil
-    # pkgs.libnotify
-    # pkgs.wl-clipboard
-    # pkgs.wlsunset
-    # pkgs.grim
-    # pkgs.slurp
-    # pkgs.pavucontrol
-    # pkgs.pamixer
-    # pkgs.inter
-    # pkgs.roboto
+    brightnessctl ddcutil libnotify wl-clipboard wlsunset grim slurp
+    pavucontrol pamixer inter roboto
   ];
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
@@ -176,12 +168,12 @@
   environment.sessionVariables = {
     NIXOS_OZONE_WL = "1";
   };
-  environment.variables = {
-    QT_STYLE_OVERRIDE = "kvantum";
-    QT_QPA_PLATFORMTHEME = "qt6ct";
-    XCURSOR_THEME = "Bibata-Modern-Ice";
-    XCURSOR_SIZE = "24";
-  };
+  # environment.variables = {
+  #   QT_STYLE_OVERRIDE = "kvantum";
+  #   QT_QPA_PLATFORMTHEME = "qt6ct";
+  #   XCURSOR_THEME = "Bibata-Modern-Ice";
+  #   XCURSOR_SIZE = "24";
+  # };
 
   system.stateVersion = "25.05";
 }
