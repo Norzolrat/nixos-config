@@ -123,12 +123,10 @@ in
   ];
 
   ################
-  # Audio & Blue #
+  # Audio        #
   ################
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
-  hardware.bluetooth.enable = true;
-  services.blueman.enable = true;
   services.pipewire = {
     enable = true;
     alsa.enable = true;
@@ -136,8 +134,20 @@ in
     pulse.enable = true;
     jack.enable = true;
     wireplumber.enable = true;
-    bluetooth.enable = true;
   };
+
+  ################
+  # Bluetooth    #
+  ################
+  hardware.bluetooth = {
+    enable = true;
+    powerOnBoot = true;
+    # settings = {
+    #   # tes réglages bluetooth ici
+    # };
+  };
+
+  services.blueman.enable = true;
 
   ################
   # Sécu / divers#
