@@ -96,7 +96,6 @@
   environment.etc."gdm/backgrounds/default.png".source =
     ../../users/normi/dots/wallpapers/default.png;
 
-  programs.dconf.enable = true;
   services.xserver.displayManager.gdm.settings = {
     "org.gnome.desktop.background" = {
       picture-uri = "file:///etc/gdm/backgrounds/default.png";
