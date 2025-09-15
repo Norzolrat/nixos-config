@@ -24,26 +24,27 @@
   ################
 
   # sudo systemctl reboot --boot-loader-menu=10s ==> take in the menu
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
 
-  boot = {
-    loader = {
-      timeout = 2;
-      efi.canTouchEfiVariables = true;
-
-      systemd-boot = {
-        enable = true;
-        consoleMode = "max";
-        # configurationLimit = 8;
-      };
-    };
-
-    plymouth.enable = true;
-    plymouth.theme = "spinner";
-    initrd.verbose = false;
-    # kernelParams = [ "quiet" "splash" "loglevel=3" "rd.systemd.show_status=auto" "rd.udev.log_level=3" ];
-    kernelParams = [ "quiet" "splash" ];
-
-  };
+  # boot = {
+  #   loader = {
+  #     timeout = 0;
+  #     efi.canTouchEfiVariables = true;
+  # 
+  #     systemd-boot = {
+  #       enable = true;
+  #       consoleMode = "max";
+  #       configurationLimit = 8;
+  #     };
+  #   };
+  # 
+  #   plymouth.enable = true;
+  #   plymouth.theme = "spinner";
+  #   initrd.verbose = false;
+  #   kernelParams = [ "quiet" "splash" ];
+  # 
+  #  };
 
   ################
   # Matériel     #
@@ -77,13 +78,13 @@
   # Caméra IPU6 (MateBook GT / Meteor Lake)
   # hardware.ipu6.enable = true;
   # hardware.ipu6.platform = "ipu6epmtl";
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  # boot.kernelPackages = pkgs.linuxPackages_latest;
 
   ################
   # Bureau       #
   ################
   services.xserver.enable = true;
-  # services.displayManager.defaultSession = "hyprland";
+  services.displayManager.defaultSession = "hyprland";
 
   # Hyprland
   programs.hyprland = {
@@ -91,11 +92,11 @@
     xwayland.enable = true;
   };
 
-  # xdg.portal.enable = true;
-  # xdg.portal.extraPortals = [
-  #   pkgs.xdg-desktop-portal-hyprland
-  #   pkgs.xdg-desktop-portal-gtk
-  # ];
+  xdg.portal.enable = true;
+  xdg.portal.extraPortals = [
+    pkgs.xdg-desktop-portal-hyprland
+    pkgs.xdg-desktop-portal-gtk
+  ];
 
   ################
   # Audio        #
@@ -108,8 +109,21 @@
     alsa.support32Bit = true;
     pulse.enable = true;
     jack.enable = true;
-    # wireplumber.enable = true;
+    wireplumber.enable = true;
   };
+
+  ################
+  # Bluetooth    #
+  ################
+  # hardware.bluetooth = {
+  #   enable = true;
+  #   powerOnBoot = true;
+  #   # settings = {
+  #   #   # tes réglages bluetooth ici
+  #   # };
+  # };
+
+  # services.blueman.enable = true;
 
   ################
   # Sécu / divers#
@@ -152,22 +166,22 @@
 
   environment.systemPackages = with pkgs; [
     # basics
-    bluez vim zsh git curl alacritty firefox nautilus
+    vim zsh git curl alacritty firefox nautilus
     hyprland
     qt6.qtdeclarative qt6.qt5compat qt6.qtsvg
     noctalia.packages.${pkgs.system}.default
     # helpers
-    # pkgs.brightnessctl
-    # pkgs.ddcutil
-    # pkgs.libnotify
-    # pkgs.wl-clipboard
-    # pkgs.wlsunset
-    # pkgs.grim
-    # pkgs.slurp
-    # pkgs.pavucontrol
-    # pkgs.pamixer
-    # pkgs.inter
-    # pkgs.roboto
+    pkgs.brightnessctl
+    pkgs.ddcutil
+    pkgs.libnotify
+    pkgs.wl-clipboard
+    pkgs.wlsunset
+    pkgs.grim
+    pkgs.slurp
+    pkgs.pavucontrol
+    pkgs.pamixer
+    pkgs.inter
+    pkgs.roboto
   ];
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
@@ -185,3 +199,4 @@
 
   system.stateVersion = "25.05";
 }
+
