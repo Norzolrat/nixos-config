@@ -24,7 +24,7 @@
   ################
 
   # sudo systemctl reboot --boot-loader-menu=10s ==> take in the menu
- 
+  boot.loader.efi.canTouchEfiVariables = true;
   boot.loader.systemd-boot.enable = true;
 
   # boot = {
