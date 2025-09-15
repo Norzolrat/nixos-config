@@ -82,28 +82,6 @@
   # Bureau       #
   ################
   services.xserver.enable = true;
-
-  # services.displayManager.sddm = {
-  #   enable = true;
-  #   package = pkgs.kdePackages.sddm;
-  #   wayland.enable = true;
-  # 
-  #   theme = "LockeD";  
-  #   settings = {
-  #     Theme = {
-  #       Current = "LockeD";
-  #       ThemeDir = "/run/current-system/sw/share/sddm/themes";
-  #     };
-  #     General.LogLevel = "debug";
-  #   };
-  # };
-
-  # environment.etc."sddm.conf.d/99-theme.conf".text = ''
-  #   [Theme]
-  #   Current=LockeD
-  #   ThemeDir=/run/current-system/sw/share/sddm/themes
-  # '';
-
   services.displayManager.defaultSession = "hyprland";
 
   # Hyprland
@@ -188,7 +166,6 @@
     # basics
     bluez vim zsh git curl alacritty firefox nautilus
     hyprland
-    lockedTheme
     kdePackages.sddm
     qt6.qtdeclarative qt6.qt5compat qt6.qtsvg
     noctalia.packages.${pkgs.system}.default
