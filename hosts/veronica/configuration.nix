@@ -28,25 +28,25 @@ in
 
   # sudo systemctl reboot --boot-loader-menu=10s ==> take in the menu
 
-  # boot = {
-  #   loader = {
+  boot = {
+    loader = {
   #     timeout = 0;
   #     efi.canTouchEfiVariables = true;
   #     efi.efiSysMountPoint = "/boot";  
 
-  #     systemd-boot = {
-  #       enable = true;
-  #       consoleMode = "max";
+      systemd-boot = {
+        enable = true;
+        consoleMode = "max";
   #       configurationLimit = 8;
-  #     };
-  #   };
+      };
+    };
 
-  #   plymouth.enable = true;
-  #   plymouth.theme = "spinner";
+    plymouth.enable = true;
+    plymouth.theme = "spinner";
   #   initrd.verbose = false;
-  #   kernelParams = [ "quiet" "splash" "loglevel=3" "rd.systemd.show_status=auto" "rd.udev.log_level=3" ];
+    kernelParams = [ "quiet" "splash" ];
 
-  # };
+  };
 
   # boot.loader.grub = {
   #   enable = true;
