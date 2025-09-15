@@ -34,11 +34,11 @@ in
       efi.canTouchEfiVariables = true;
       efi.efiSysMountPoint = "/boot";  
 
-      systemd-boot = {
-        enable = true;
-        consoleMode = "max";
-        configurationLimit = 8;
-      };
+      # systemd-boot = {
+      #   enable = true;
+      #   consoleMode = "max";
+      #   configurationLimit = 8;
+      # };
     };
 
     plymouth.enable = true;
