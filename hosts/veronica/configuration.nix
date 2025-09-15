@@ -1,5 +1,7 @@
 { config, pkgs, noctalia, ... }:
-
+let
+  lib = pkgs.lib;
+in
 {
   networking.hostName = "Veronica";
   networking.networkmanager.enable = true;
@@ -115,20 +117,20 @@
   ################
   # Bluetooth    #
   ################
-  hardware.bluetooth = {
-    enable = true;
-    powerOnBoot = true;
-    # settings = {
-    #   # tes réglages bluetooth ici
-    # };
-  };
+  # hardware.bluetooth = {
+  #   enable = true;
+  #   powerOnBoot = true;
+  #   # settings = {
+  #   #   # tes réglages bluetooth ici
+  #   # };
+  # };
 
-  services.blueman.enable = true;
+  # services.blueman.enable = true;
 
   ################
   # Sécu / divers#
   ################
-  services.fprintd.enable = true;
+  # services.fprintd.enable = true;
 
   ################
   # Virtualisation
@@ -166,9 +168,8 @@
 
   environment.systemPackages = with pkgs; [
     # basics
-    bluez vim zsh git curl alacritty firefox nautilus
+    vim zsh git curl alacritty firefox nautilus
     hyprland
-    kdePackages.sddm
     qt6.qtdeclarative qt6.qt5compat qt6.qtsvg
     noctalia.packages.${pkgs.system}.default
     # helpers
