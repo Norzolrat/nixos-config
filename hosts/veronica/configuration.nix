@@ -28,30 +28,30 @@ in
 
   # sudo systemctl reboot --boot-loader-menu=10s ==> take in the menu
 
-  # boot = {
-  #   loader = {
-  #     timeout = 0;
-  #     efi.canTouchEfiVariables = true;
-  #     efi.efiSysMountPoint = "/boot";  
+  boot = {
+    loader = {
+      timeout = 0;
+      efi.canTouchEfiVariables = true;
+      efi.efiSysMountPoint = "/boot";  
 
-      # systemd-boot = {
-      #   enable = true;
-      #   consoleMode = "max";
-      #   configurationLimit = 8;
-      # };
-  #   };
+      systemd-boot = {
+        enable = true;
+        consoleMode = "max";
+        configurationLimit = 8;
+      };
+    };
 
- #    plymouth.enable = true;
- #    plymouth.theme = "spinner";
- #    initrd.verbose = false;
- #    kernelParams = [ "quiet" "splash" "loglevel=3" "rd.systemd.show_status=auto" "rd.udev.log_level=3" ];
+    plymouth.enable = true;
+    plymouth.theme = "spinner";
+    initrd.verbose = false;
+    kernelParams = [ "quiet" "splash" "loglevel=3" "rd.systemd.show_status=auto" "rd.udev.log_level=3" ];
 
- # };
+ };
 
-  boot.loader.grub = {
-    enable = true;
-    device = "/dev/nvme0n1p1";
-  };
+  # boot.loader.grub = {
+  #   enable = true;
+  #   device = "/dev/nvme0n1p1";
+  # };
 
   ################
   # Matériel     #
