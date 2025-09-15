@@ -50,7 +50,7 @@ in
 
   boot.loader.grub = {
     enable = true;
-    device = "/dev/vda";
+    device = "/dev/nvme0n1p1";
   };
 
   ################
@@ -83,8 +83,8 @@ in
   hardware.steam-hardware.enable = true;
 
   # Caméra IPU6 (MateBook GT / Meteor Lake)
-  # hardware.ipu6.enable = true;
-  # hardware.ipu6.platform = "ipu6epmtl";
+  hardware.ipu6.enable = true;
+  hardware.ipu6.platform = "ipu6epmtl";
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
   ################
