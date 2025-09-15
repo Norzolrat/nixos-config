@@ -1,8 +1,5 @@
 { config, pkgs, noctalia, ... }:
 
-let
-  lockedTheme = pkgs.callPackage ./sddm/theme-locked.nix {};
-in
 {
   networking.hostName = "Veronica";
   networking.networkmanager.enable = true;
@@ -28,30 +25,24 @@ in
 
   # sudo systemctl reboot --boot-loader-menu=10s ==> take in the menu
 
-  boot = {
-    loader = {
+  # boot = {
+  #   loader = {
   #     timeout = 0;
   #     efi.canTouchEfiVariables = true;
-  #     efi.efiSysMountPoint = "/boot";  
-
-      systemd-boot = {
-        enable = true;
-        consoleMode = "max";
+  # 
+  #     systemd-boot = {
+  #       enable = true;
+  #       consoleMode = "max";
   #       configurationLimit = 8;
-      };
-    };
-
-    plymouth.enable = true;
-    plymouth.theme = "spinner";
+  #     };
+  #   };
+  # 
+  #   plymouth.enable = true;
+  #   plymouth.theme = "spinner";
   #   initrd.verbose = false;
-    kernelParams = [ "quiet" "splash" ];
-
-  };
-
-  # boot.loader.grub = {
-  #   enable = true;
-  #   device = "/dev/nvme0n1p1";
-  # };
+  #   kernelParams = [ "quiet" "splash" ];
+  # 
+  #  };
 
   ################
   # Matériel     #
@@ -92,26 +83,26 @@ in
   ################
   services.xserver.enable = true;
 
-  services.displayManager.sddm = {
-    enable = true;
-    package = pkgs.kdePackages.sddm;
-    wayland.enable = true;
+  # services.displayManager.sddm = {
+  #   enable = true;
+  #   package = pkgs.kdePackages.sddm;
+  #   wayland.enable = true;
+  # 
+  #   theme = "LockeD";  
+  #   settings = {
+  #     Theme = {
+  #       Current = "LockeD";
+  #       ThemeDir = "/run/current-system/sw/share/sddm/themes";
+  #     };
+  #     General.LogLevel = "debug";
+  #   };
+  # };
 
-    theme = "LockeD";  
-    settings = {
-      Theme = {
-        Current = "LockeD";
-        ThemeDir = "/run/current-system/sw/share/sddm/themes";
-      };
-      General.LogLevel = "debug";
-    };
-  };
-
-  environment.etc."sddm.conf.d/99-theme.conf".text = ''
-    [Theme]
-    Current=LockeD
-    ThemeDir=/run/current-system/sw/share/sddm/themes
-  '';
+  # environment.etc."sddm.conf.d/99-theme.conf".text = ''
+  #   [Theme]
+  #   Current=LockeD
+  #   ThemeDir=/run/current-system/sw/share/sddm/themes
+  # '';
 
   services.displayManager.defaultSession = "hyprland";
 
@@ -119,7 +110,6 @@ in
   programs.hyprland = {
     enable = true;
     xwayland.enable = true;
-    # package = pkgs.hyprland; # optional, defaults are fine
   };
 
   xdg.portal.enable = true;
