@@ -96,10 +96,12 @@
   environment.etc."gdm/backgrounds/default.png".source =
     ../../users/normi/dots/wallpapers/default.png;
 
-  services.xserver.displayManager.gdm.settings = {
+  services.displayManager.gdm.settings = {
     "org.gnome.desktop.background" = {
-      picture-uri = "file:///etc/gdm/backgrounds/default.png";
-      picture-uri-dark = "file:///etc/gdm/backgrounds/default.png";
+      picture-uri = "file:///home/normi/.config/wallpapers/default.pngpng";
+      # picture-uri = "file:///etc/gdm/backgrounds/default.png";
+      # picture-uri-dark = "file:///etc/gdm/backgrounds/default.png";
+      picture-uri-dark = "file:///home/normi/.config/wallpapers/default.png";
       picture-options = "zoom";
       primary-color = "#1f1f1f";
     };
