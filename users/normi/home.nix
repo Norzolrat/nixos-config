@@ -42,6 +42,13 @@ in
     onlyoffice-desktopeditors
     virt-manager
     # zen-browser
+
+    #for winapps
+    freerdp
+    remmina
+    qemu_kvm
+    virt-manager
+    spice-gtk
   ];
 
   # ——— GTK / Qt theme ———
