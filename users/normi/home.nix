@@ -112,5 +112,49 @@ in
     force = true;
   };
   programs.alacritty.enable = true;
+  programs.fish = {
+    enable = true;
+    plugins = [
+      # Gestionnaire de plugins fisher
+      { name = "fisher"; src = pkgs.fetchFromGitHub {
+          owner = "jorgebucaran";
+          repo = "fisher";
+          rev = "4.4.5"; # version
+          sha256 = "sha256-...";
+        };
+      }
+
+      # Prompt moderne et rapide
+      { name = "starship"; src = pkgs.fishPlugins.starship.src; }
+
+      # Autosuggestions (comme zsh-autosuggestions)
+      { name = "fish-autosuggestions"; src = pkgs.fishPlugins.fish-autosuggestions.src; }
+
+      # Syntax highlighting
+      { name = "fish-foreign-env"; src = pkgs.fishPlugins.fish-foreign-env.src; }
+
+      # K8s (kubectl helper complet)
+      { name = "kubectl-fish-completions"; src = pkgs.fetchFromGitHub {
+          owner = "evanlucas";
+          repo = "kubectl-fish-completions";
+          rev = "master";
+          sha256 = "sha256-...";
+        };
+      }
+
+      # Terraform completions
+      { name = "terraform-fish-completions"; src = pkgs.fetchFromGitHub {
+          owner = "hashicorp";
+          repo = "terraform";
+          rev = "v1.9.5"; # à adapter à la version terraform que tu utilises
+          sha256 = "sha256-...";
+          # path: "contrib/fish-completion"
+        };
+      }
+    ];
+
+  };
+  home.shell = pkgs.fish;
+  programs.starship.enable = true;
 }
 
