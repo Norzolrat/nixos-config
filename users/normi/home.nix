@@ -154,7 +154,7 @@ in
     ];
 
   };
-  home.shell = pkgs.fish;
+  users.users.normi.shell = pkgs.fish;
   programs.starship.enable = true;
 }
 
