@@ -112,9 +112,5 @@ in
     force = true;
   };
   programs.alacritty.enable = true;
-  programs.fish = {
-    enable = true;
-  };
-  users.users.normi.shell = pkgs.fish;
 }
 
