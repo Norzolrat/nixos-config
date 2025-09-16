@@ -127,6 +127,18 @@
   };
 
   ################
+  # Bluetooth    #
+  ################
+  hardware.bluetooth = {
+    enable = true;
+    powerOnBoot = true;
+    # settings = {
+    #   # tes réglages bluetooth ici
+    # };
+  };
+
+
+  ################
   # Sécu / divers#
   ################
   # services.fprintd.enable = true;
