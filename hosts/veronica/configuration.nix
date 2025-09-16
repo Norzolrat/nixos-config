@@ -98,7 +98,7 @@
 
   services.displayManager.gdm.settings = {
     "org.gnome.desktop.background" = {
-      picture-uri = "file:///home/normi/.config/wallpapers/default.pngpng";
+      picture-uri = "file:///home/normi/.config/wallpapers/default.png";
       # picture-uri = "file:///etc/gdm/backgrounds/default.png";
       # picture-uri-dark = "file:///etc/gdm/backgrounds/default.png";
       picture-uri-dark = "file:///home/normi/.config/wallpapers/default.png";
@@ -143,7 +143,7 @@
   ################
   # Sécu / divers#
   ################
-  # services.fprintd.enable = true;
+  services.fprintd.enable = true;
 
   ################
   # Virtualisation
@@ -168,12 +168,16 @@
   ################
   # Utilisateur  #
   ################
+  programs.fish = {
+    enable = true;
+  };
   users.users.normi = {
     isNormalUser = true;
+    shell = pkgs.fish;
     description = "Normi";
     extraGroups = [ "networkmanager" "wheel" "libvirtd" "kvm" "docker" ];
   };
-
+  
   ################
   # Paquets base #
   ################
