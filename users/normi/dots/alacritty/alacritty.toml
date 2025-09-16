@@ -6,6 +6,6 @@ decorations = "none"
 padding.x = 10
 padding.y = 10
 
-[shell]
+[terminal.shell]
 program = "/run/current-system/sw/bin/fish"
 args = ["-l"]
