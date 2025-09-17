@@ -1,7 +1,7 @@
 { config, pkgs, noctalia, ... }:
 
 let
-  # Helpers pour choisir des attributs qui changent de nom selon les branches nixpkgs
+  # Helpers pour sélectionner les bons attributs selon la branche nixpkgs
   get = builtins.getAttr;
   has = builtins.hasAttr;
 
@@ -29,6 +29,11 @@ let
     else if has "icamerasrc-ipu6ep" g          then get "icamerasrc-ipu6ep" g
     else if has "icamerasrc-ipu6-unstable" g   then get "icamerasrc-ipu6-unstable" g
     else get "icamerasrc-ipu6" g;
+
+  v4lTools =
+    if has "v4l2-utils" pkgs then get "v4l2-utils" pkgs
+    else if has "v4l-utils" pkgs then get "v4l-utils" pkgs
+    else throw "Neither v4l2-utils nor v4l-utils found in nixpkgs";
 in
 {
   networking.hostName = "Veronica";
@@ -68,10 +73,10 @@ in
     initrd.verbose = false;
     kernelParams = [ "quiet" "splash" ];
 
-    # Noyau récent (tes modules IPU6 existent en 6.16)
+    # Noyau récent
     kernelPackages = pkgs.linuxPackages_latest;
 
-    # v4l2loopback pour exposer un /dev/video utilisable par les applis si besoin
+    # v4l2loopback pour exposer un /dev/video utilisable par les applis
     extraModulePackages = [ config.boot.kernelPackages.v4l2loopback ];
     kernelModules = [ "v4l2loopback" ];
   };
@@ -131,7 +136,7 @@ in
     xwayland.enable = true;
   };
 
-  # Portals (partage d’écran/fichiers sous Wayland)
+  # Portals (Wayland)
   xdg.portal.enable = true;
   xdg.portal.extraPortals = [
     pkgs.xdg-desktop-portal-hyprland
@@ -224,7 +229,7 @@ in
     camHal
     icamerasrc
     v4l2-relayd
-    v4l2-utils or v4l-utils  # ← garde celui dispo dans ta branche (remplace si besoin)
+    v4lTools
     ffmpeg
     gst_all_1.gstreamer
     gst_all_1.gst-plugins-base
@@ -246,7 +251,6 @@ in
   #############################
   services.v4l2-relayd.instances.cam0 = {
     cardLabel = "IPU6 Camera";
-    # pipeline simple ; ajuste résolution/fps si besoin
     input.pipeline = "icamerasrc ! video/x-raw,format=NV12,framerate=30/1 ! videoconvert";
     extraPackages = [ icamerasrc ];
   };
