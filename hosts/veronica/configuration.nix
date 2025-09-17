@@ -179,7 +179,7 @@ in
   ################
   # Sécu / divers#
   ################
-  services.fprintd.enable = true;
+  services.fprintd.enable = true; 
 
   ################
   # Virtualisation
@@ -223,7 +223,7 @@ in
 
     # helpers
     brightnessctl ddcutil libnotify wl-clipboard wlsunset grim slurp
-    pavucontrol pamixer inter roboto
+    pavucontrol pamixer inter roboto libinput
 
     # IPU6 userspace + tests
     camHal
