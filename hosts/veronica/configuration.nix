@@ -1,5 +1,35 @@
 { config, pkgs, noctalia, ... }:
 
+let
+  # Helpers pour choisir des attributs qui changent de nom selon les branches nixpkgs
+  get = builtins.getAttr;
+  has = builtins.hasAttr;
+
+  ipu6Bins =
+    if has "ipu6-camera-bins-unstable" pkgs
+    then get "ipu6-camera-bins-unstable" pkgs
+    else get "ipu6-camera-bins" pkgs;
+
+  ivscFw =
+    if has "ivsc-firmware-unstable" pkgs
+    then get "ivsc-firmware-unstable" pkgs
+    else get "ivsc-firmware" pkgs;
+
+  camHal =
+    if has "ipu6epmtl-camera-hal-unstable" pkgs then get "ipu6epmtl-camera-hal-unstable" pkgs
+    else if has "ipu6epmtl-camera-hal" pkgs     then get "ipu6epmtl-camera-hal" pkgs
+    else if has "ipu6-camera-hal-unstable" pkgs then get "ipu6-camera-hal-unstable" pkgs
+    else get "ipu6-camera-hal" pkgs;
+
+  g = pkgs.gst_all_1;
+  icamerasrc =
+    if has "icamerasrc-ipu6epmtl-unstable" g then get "icamerasrc-ipu6epmtl-unstable" g
+    else if has "icamerasrc-ipu6epmtl" g     then get "icamerasrc-ipu6epmtl" g
+    else if has "icamerasrc-ipu6ep-unstable" g then get "icamerasrc-ipu6ep-unstable" g
+    else if has "icamerasrc-ipu6ep" g          then get "icamerasrc-ipu6ep" g
+    else if has "icamerasrc-ipu6-unstable" g   then get "icamerasrc-ipu6-unstable" g
+    else get "icamerasrc-ipu6" g;
+in
 {
   networking.hostName = "Veronica";
   networking.networkmanager.enable = true;
@@ -29,6 +59,7 @@
       systemd-boot = {
         enable = true;
         consoleMode = "max";
+        # configurationLimit = 8;
       };
     };
 
@@ -37,12 +68,12 @@
     initrd.verbose = false;
     kernelParams = [ "quiet" "splash" ];
 
-    # Module loopback vidéo pour compat applis
+    # Noyau récent (tes modules IPU6 existent en 6.16)
+    kernelPackages = pkgs.linuxPackages_latest;
+
+    # v4l2loopback pour exposer un /dev/video utilisable par les applis si besoin
     extraModulePackages = [ config.boot.kernelPackages.v4l2loopback ];
     kernelModules = [ "v4l2loopback" ];
-
-    # Reste sur un noyau récent (tes modules IPU6 existent déjà en 6.16)
-    kernelPackages = pkgs.linuxPackages_latest;
   };
 
   ################
@@ -77,45 +108,14 @@
   hardware.ipu6.enable = true;
   hardware.ipu6.platform = "ipu6epmtl";
 
-  # Firmware + HAL + plugin GStreamer (non-libre requis)
+  # Paquets non-libres requis
   nixpkgs.config.allowUnfree = true;
 
-  # Certains firmwares doivent être embarqués dans l’initrd
-  hardware.firmware = with pkgs; [
-    ipu6-camera-bins-unstable  # firmwares/libraries IPU6
-    ivsc-firmware-unstable     # firmware Intel VSC (souvent requis)
+  # Firmwares à embarquer
+  hardware.firmware = [
+    ipu6Bins
+    ivscFw
   ];
-
-  # Paquets userspace nécessaires + outils de test
-  environment.systemPackages = with pkgs; [
-    # basics
-    bluez vim zsh git curl alacritty firefox nautilus
-    qt6.qtdeclarative qt6.qt5compat qt6.qtsvg
-    noctalia.packages.${pkgs.system}.default
-
-    # helpers
-    brightnessctl ddcutil libnotify wl-clipboard wlsunset grim slurp
-    pavucontrol pamixer inter roboto
-
-    # IPU6 userspace
-    ipu6epmtl-camera-hal-unstable
-    gst_all_1.icamerasrc-ipu6epmtl
-    v4l2-relayd
-    v4l-utils
-    ffmpeg
-    gst_all_1.gstreamer
-    gst_all_1.gst-plugins-base
-    gst_all_1.gst-plugins-good
-    gst_all_1.gst-plugins-bad
-  ];
-
-  # Exposer la caméra via un device v4l2 « propre » pour les applis
-  services.v4l2-relayd.instances.cam0 = {
-    cardLabel = "IPU6 Camera";
-    # pipeline simple ; ajuste si besoin (résolution/fps)
-    input.pipeline = "icamerasrc ! video/x-raw,format=NV12,framerate=30/1 ! videoconvert";
-    extraPackages = [ pkgs.gst_all_1.icamerasrc-ipu6epmtl ];
-  };
 
   ################
   # Bureau       #
@@ -131,7 +131,7 @@
     xwayland.enable = true;
   };
 
-  # Portals (Wayland/Hyprland : partages d’écran, fichiers, etc.)
+  # Portals (partage d’écran/fichiers sous Wayland)
   xdg.portal.enable = true;
   xdg.portal.extraPortals = [
     pkgs.xdg-desktop-portal-hyprland
@@ -207,6 +207,31 @@
     extraGroups = [ "networkmanager" "wheel" "libvirtd" "kvm" "docker" ];
   };
 
+  ################
+  # Paquets base #
+  ################
+  environment.systemPackages = with pkgs; [
+    # basics
+    bluez vim zsh git curl alacritty firefox nautilus
+    qt6.qtdeclarative qt6.qt5compat qt6.qtsvg
+    noctalia.packages.${pkgs.system}.default
+
+    # helpers
+    brightnessctl ddcutil libnotify wl-clipboard wlsunset grim slurp
+    pavucontrol pamixer inter roboto
+
+    # IPU6 userspace + tests
+    camHal
+    icamerasrc
+    v4l2-relayd
+    v4l2-utils or v4l-utils  # ← garde celui dispo dans ta branche (remplace si besoin)
+    ffmpeg
+    gst_all_1.gstreamer
+    gst_all_1.gst-plugins-base
+    gst_all_1.gst-plugins-good
+    gst_all_1.gst-plugins-bad
+  ];
+
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   # Variables d'env
@@ -215,4 +240,14 @@
   };
 
   system.stateVersion = "25.05";
+
+  #############################
+  # v4l2-relayd (optionnel)   #
+  #############################
+  services.v4l2-relayd.instances.cam0 = {
+    cardLabel = "IPU6 Camera";
+    # pipeline simple ; ajuste résolution/fps si besoin
+    input.pipeline = "icamerasrc ! video/x-raw,format=NV12,framerate=30/1 ! videoconvert";
+    extraPackages = [ icamerasrc ];
+  };
 }
