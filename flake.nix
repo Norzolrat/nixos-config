@@ -68,6 +68,28 @@
         inherit system;
         config.allowUnfree = true;
       };
+
+      # Ce fichier décrit les UUID des partitions : il ne peut pas être versionné
+      # à l'avance et n'existe donc pas sur un clone frais. Sans ce garde-fou,
+      # Nix se contente d'un « Path does not exist in Git repository » qui
+      # n'indique pas quoi faire.
+      hardwareConfig =
+        if builtins.pathExists ./hardware-configuration.nix
+        then ./hardware-configuration.nix
+        else throw ''
+          hardware-configuration.nix est absent.
+
+          Depuis l'ISO live, l'installation le génère toute seule :
+              sudo install-matebook
+
+          Sur une machine déjà installée :
+              sudo nixos-generate-config --show-hardware-config \
+                > hardware-configuration.nix
+              git add hardware-configuration.nix
+
+          (La construction de l'ISO, elle, n'en a pas besoin :
+              nix build .#nixosConfigurations.iso.config.system.build.isoImage)
+        '';
     in
     {
     #########################################################################
@@ -102,8 +124,8 @@
 
       shellHook = ''
         echo "── nixos-matebook ─────────────────────────────"
-        echo "  build-iso    construire l'ISO d'installation"
-        echo "  check        évaluer la config sans construire"
+        echo "  build-iso    construire l'ISO live + installeur"
+        echo "  check        évaluer l'ISO sans la construire"
         echo "  lint         statix + deadnix"
         echo "  fmt          formater tous les .nix"
         echo "───────────────────────────────────────────────"
@@ -111,7 +133,13 @@
         build-iso() {
           nom build .#nixosConfigurations.iso.config.system.build.isoImage "$@"
         }
-        check()  { nix flake check --no-build; }
+        # Ciblé sur l'ISO : « nix flake check » évaluerait aussi #matebook,
+        # qui exige un hardware-configuration.nix propre à la machine.
+        check()  {
+          nix eval --raw \
+            .#nixosConfigurations.iso.config.system.build.toplevel.drvPath \
+            && echo " — ISO évaluée sans erreur"
+        }
         lint()   { statix check . ; deadnix .; }
         fmt()    { nixpkgs-fmt .; }
         export -f build-iso check lint fmt 2>/dev/null || true
@@ -134,8 +162,9 @@
       inherit system;
       specialArgs = { inherit inputs; };
       modules = [
-        ./hardware-configuration.nix   # généré par nixos-generate-config
+        hardwareConfig                 # généré par install.sh, propre au disque
         ./options.nix
+        ./system.nix                   # hostname, locale, flakes, gc
         ./matebook-gt.nix              # le module matériel
         ./desktop.nix                  # niri + noctalia
         ./apps.nix                     # spotify, discord, bureautique

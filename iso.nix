@@ -94,9 +94,19 @@
     git vim wget curl
     evtest        # test brut des événements d'entrée (tactile, stylet)
 
-    # Le script de diagnostic devient une commande : tape « test-hardware »
-    # dans un terminal du live.
+    # Les deux scripts du dépôt deviennent des commandes du live :
+    #   test-hardware     diagnostic complet, à passer AVANT d'installer
+    #   install-matebook  installation automatisée de nixosConfigurations.matebook
     (writeShellScriptBin "test-hardware" (builtins.readFile ./test-hardware.sh))
+    (writeShellScriptBin "install-matebook" (builtins.readFile ./install.sh))
+
+    # Dépendances d'install.sh. Le profil d'installation en fournit déjà la
+    # plupart, mais les lister ici évite un échec en plein partitionnement.
+    dosfstools     # mkfs.fat
+    e2fsprogs      # mkfs.ext4
+    util-linux     # lsblk, findmnt, mountpoint, mkswap, wipefs
+    rsync          # copie du flake en excluant le lien « result »
+    nixos-install-tools
   ];
 
   # Ta config embarquée : si le réseau lâche pendant l'install, les fichiers

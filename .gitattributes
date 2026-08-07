@@ -1,0 +1,7 @@
+# Le dépôt est édité depuis Windows (WSL) autant que depuis NixOS. Sans ça,
+# core.autocrlf réécrit les .sh en CRLF, et builtins.readFile embarquerait un
+# script illisible par bash dans l'ISO.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary

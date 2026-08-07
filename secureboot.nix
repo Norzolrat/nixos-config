@@ -28,13 +28,17 @@
 { config, lib, pkgs, ... }:
 
 {
-  # lanzaboote remplace systemd-boot : il faut le désactiver explicitement.
-  boot.loader.systemd-boot.enable = lib.mkForce false;
-
   boot.lanzaboote = {
     enable = false;   # passer à true à l'étape 3
     pkiBundle = "/var/lib/sbctl";
   };
+
+  # lanzaboote remplace systemd-boot : il faut le désactiver explicitement —
+  # mais SEULEMENT quand lanzaboote prend le relais. Désactiver systemd-boot
+  # sans rien à la place laisse la config sans bootloader, et NixOS retombe
+  # alors sur GRUB, qui échoue sur « vous devez définir boot.loader.grub.devices ».
+  boot.loader.systemd-boot.enable =
+    lib.mkIf config.boot.lanzaboote.enable (lib.mkForce false);
 
   environment.systemPackages = [ pkgs.sbctl ];
 
