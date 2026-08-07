@@ -1,0 +1,259 @@
+# Environnement de bureau : niri + noctalia (Quickshell) + apps
+{ config, pkgs, lib, inputs, ... }:
+
+let
+  username = config.my.username;
+in
+{
+  #############################################################################
+  # niri
+  #############################################################################
+
+  programs.niri = {
+    enable = true;
+    # niri-stable suit les releases, niri-unstable le master.
+    # On passe par l'input plutôt que par pkgs.niri-stable : l'overlay du
+    # flake n'est pas garanti d'être appliqué selon l'ordre de chargement.
+    package = inputs.niri.packages.${pkgs.stdenv.hostPlatform.system}.niri-stable;
+  };
+
+  # niri ne fournit pas de portal : il faut gnome (screencast) + gtk (fichiers)
+  xdg.portal = {
+    enable = true;
+    extraPortals = with pkgs; [
+      xdg-desktop-portal-gnome
+      xdg-desktop-portal-gtk
+    ];
+    config.niri = {
+      default = [ "gnome" "gtk" ];
+      "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
+    };
+  };
+
+  # Gestionnaire de session. tuigreet est léger et n'impose pas de DE.
+  services.greetd = {
+    enable = true;
+    settings.default_session = {
+      command = "${lib.getExe pkgs.tuigreet} --time --remember --cmd niri-session";
+      user = "greeter";
+    };
+  };
+
+  #############################################################################
+  # Shell
+  #############################################################################
+  # L'activation système est obligatoire : c'est elle qui inscrit fish dans
+  # /etc/shells et installe les complétions générées depuis les paquets Nix.
+  # Sans elle, greetd refusera fish comme shell de login.
+
+  programs.fish.enable = true;
+  users.users.${username} = {
+    isNormalUser = true;
+    shell = pkgs.fish;
+    extraGroups = [ "wheel" "networkmanager" "video" "input" ];
+  };
+
+  security.polkit.enable = true;
+  services.gnome.gnome-keyring.enable = true;
+  security.pam.services.greetd.enableGnomeKeyring = true;
+
+  #############################################################################
+  # Noctalia — dépendances système obligatoires
+  #############################################################################
+  # Sans ces quatre services, les widgets wifi / bluetooth / batterie /
+  # profil de puissance de Noctalia restent vides.
+
+  networking.networkmanager.enable = true;
+  hardware.bluetooth.enable = true;
+  services.upower.enable = true;
+  # services.power-profiles-daemon est déjà activé dans matebook-gt.nix
+
+  environment.systemPackages = [
+    inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default
+    inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
+
+    # XWayland pour niri. SANS LUI, aucune application X11 ne démarre :
+    # Steam, une partie des jeux, certains Electron et Java. niri le lance
+    # automatiquement dès qu'il le trouve dans le PATH.
+    inputs.niri.packages.${pkgs.stdenv.hostPlatform.system}.xwayland-satellite-stable
+  ] ++ (with pkgs; [
+    # utilitaires attendus par Noctalia
+    wl-clipboard
+    cliphist
+    grim
+    slurp
+    wlsunset
+    brightnessctl
+
+    # VSCode. La variante FHS évite de casser les extensions qui embarquent
+    # leurs propres binaires (serveurs LSP, debuggers, formatters).
+    vscode-fhs
+
+    alacritty  # terminalCommand par défaut de Noctalia
+
+    # Outils repris de ta config Hyprland
+    fuzzel            # repli du lanceur Noctalia
+    tesseract         # OCR (Mod+Shift+T)
+    hyprpicker        # pipette (Mod+Shift+C) — fonctionne hors Hyprland
+    wf-recorder       # enregistrement d'écran
+    easyeffects       # lancé au démarrage
+    pavucontrol
+    nautilus
+    btop
+    jq                # utilisé par tes scripts
+    libnotify         # notify-send
+    bibata-cursors    # HYPR: Bibata-Modern-Classic
+  ]);
+
+  # HYPR: exec-once = fcitx5
+  i18n.inputMethod = {
+    enable = true;
+    type = "fcitx5";
+    fcitx5.addons = with pkgs; [ fcitx5-gtk ];
+  };
+
+  # HYPR: exec-once = hypridle — hypridle est spécifique à Hyprland.
+  # L'équivalent générique compatible niri est swayidle, qui se configure
+  # côté home-manager (programs.noctalia-shell gère déjà lockOnSuspend).
+  # À ajouter plus tard, une fois tes délais de veille choisis.
+
+  # Le verrouillage Noctalia détecte seul /etc/pam.d/login, généré par NixOS.
+  # Décommente uniquement si tu veux une pile PAM dédiée :
+  #   security.pam.services.noctalia = {};
+  #   environment.sessionVariables.NOCTALIA_PAM_SERVICE = "noctalia";
+  #
+  # N'active PAS services.fprintd : le capteur Goodix GXFP5130 de cette
+  # machine n'a aucun pilote Linux, et Noctalia attendrait un capteur absent.
+
+  #############################################################################
+  # Steam
+  #############################################################################
+
+  programs.steam = {
+    enable = true;
+    gamescopeSession.enable = true;   # utile pour cadrer sur l'écran 3:2
+    remotePlay.openFirewall = true;
+    localNetworkGameTransfers.openFirewall = true;
+  };
+  programs.gamemode.enable = true;
+
+  # hardware.graphics.enable32Bit est déjà activé dans matebook-gt.nix,
+  # c'est indispensable pour Proton.
+
+  #############################################################################
+  # Wayland — variables d'environnement
+  #############################################################################
+
+  environment.sessionVariables = {
+    NIXOS_OZONE_WL = "1";           # VSCode et tout Electron en Wayland natif
+    MOZ_ENABLE_WAYLAND = "1";       # Zen (base Firefox)
+    QT_QPA_PLATFORM = "wayland";
+    XDG_CURRENT_DESKTOP = "niri";
+  };
+
+  fonts.packages = with pkgs; [
+    nerd-fonts.jetbrains-mono
+    inter
+    noto-fonts
+    noto-fonts-color-emoji
+  ];
+
+  #############################################################################
+  # Config utilisateur (home-manager)
+  #############################################################################
+
+  home-manager.useGlobalPkgs = true;
+  home-manager.useUserPackages = true;
+  home-manager.extraSpecialArgs = { inherit inputs; };
+
+  home-manager.users.${username} = { config, ... }: {
+    home.stateVersion = "25.11";
+
+    imports = [
+      inputs.noctalia.homeModules.default
+    ];
+
+    programs.noctalia-shell = {
+      enable = true;
+      settings = {
+        general = {
+          # Pas de capteur d'empreintes exploitable sur cette machine.
+          allowPasswordWithFprintd = false;
+          lockOnSuspend = true;
+        };
+        appLauncher.terminalCommand = "alacritty -e";
+      };
+    };
+
+    ###########################################################################
+    # fish
+    ###########################################################################
+
+    programs.fish = {
+      enable = true;
+      shellAliases = {
+        rebuild = "sudo nixos-rebuild switch --flake ~/nixos#matebook";
+        rebuild-test = "sudo nixos-rebuild test --flake ~/nixos#matebook";
+      };
+      # fish n'est pas POSIX : nix-shell / nix develop repassent par bash et
+      # tu perds ton shell dans les sous-environnements. any-nix-shell corrige.
+      interactiveShellInit = ''
+        set -g fish_greeting
+        any-nix-shell fish --info-right | source
+      '';
+    };
+
+    home.packages = [ pkgs.any-nix-shell ];
+
+    ###########################################################################
+    # Alacritty
+    ###########################################################################
+    # Même motif que kitty : Nix gère le fichier principal, Noctalia écrit
+    # noctalia.toml à côté et on l'importe. Ne jamais laisser home-manager
+    # gérer noctalia.toml lui-même.
+
+    programs.alacritty = {
+      enable = true;
+      settings = {
+        general.import = [ "~/.config/alacritty/noctalia.toml" ];
+        window = {
+          padding = { x = 10; y = 10; };
+          opacity = 0.95;
+          decorations = "none";   # niri dessine ses propres bordures
+        };
+        font = {
+          normal.family = "JetBrainsMono Nerd Font";
+          size = 11;
+        };
+        terminal.shell.program = "${pkgs.fish}/bin/fish";
+      };
+    };
+
+    ###########################################################################
+    # Fonds d'écran
+    ###########################################################################
+    # Chaque image est un symlink individuel vers le store : le RÉPERTOIRE
+    # reste un vrai dossier inscriptible, donc tu peux continuer à y déposer
+    # de nouvelles images à la main. Si on gérait le dossier entier avec
+    # home.file, il deviendrait un symlink en lecture seule et le panneau
+    # Noctalia ne pourrait plus rien y ajouter.
+
+    home.file."Pictures/Wallpapers/default.png".source = ./wallpapers/default.png;
+    home.file."Pictures/Wallpapers/default.jpg".source = ./wallpapers/default.jpg;
+
+    # Fond par défaut du shell, à l'emplacement où Noctalia le cherche.
+    home.file.".config/wallpapers/default.png".source = ./wallpapers/default.png;
+
+    programs.noctalia-shell.settings.wallpaper = {
+      enabled = true;
+      directory = "${config.home.homeDirectory}/Pictures/Wallpapers";
+      fillMode = "crop";
+      setWallpaperOnAllMonitors = true;
+    };
+
+    # Config niri en KDL brut plutôt qu'en attrsets Nix : ta config est
+    # trop volumineuse pour être traduite sans erreurs, et le KDL se
+    # débogue directement avec la documentation niri.
+    programs.niri.config = builtins.readFile ./niri-config.kdl;
+  };
+}
