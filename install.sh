@@ -67,13 +67,16 @@ usage() {
   cat <<'EOF'
 install-matebook — installe nixosConfigurations.matebook sur ce portable.
 
-  sudo install-matebook                        interactif (recommandé)
+  sudo install-matebook                        demande le disque, puis installe
   sudo install-matebook --dry-run              montre tout, n'exécute rien
 
-Modes non interactifs :
-  --wipe DISQUE          efface tout le disque (ex: --wipe /dev/nvme0n1)
-  --esp PART --root PART réutilise l'ESP existant, formate la racine
-                         (dual boot Windows : l'ESP n'est PAS reformaté)
+Par défaut : NixOS seul sur tout le disque, ce que fait cette machine.
+
+  --wipe DISQUE          désigne le disque sans le demander (--wipe /dev/nvme0n1)
+
+Modes de secours, pour un cas particulier :
+  --esp PART --root PART réutilise un ESP existant et formate seulement la
+                         racine — pour cohabiter avec un autre OS
   --mounted              /mnt est déjà partitionné, formaté et monté
 
 Options :
@@ -155,28 +158,10 @@ partdev() {
 # Choix du mode
 #############################################################################
 
-if [[ -z $MODE ]]; then
-  step "Disques détectés"
-  lsblk -o NAME,SIZE,TYPE,FSTYPE,LABEL,MOUNTPOINTS
-  cat <<'EOF'
-
-Trois façons d'installer :
-
-  1) Effacer tout un disque         — Windows et ses données disparaissent.
-  2) À côté de Windows              — tu as déjà libéré de la place et créé
-                                      une partition Linux ; l'ESP de Windows
-                                      est réutilisé, jamais reformaté.
-  3) /mnt est déjà prêt             — tu as partitionné et monté à la main.
-
-EOF
-  read -r -p "$(printf '\033[1;33m?\033[0m Ton choix [1/2/3] ')" choice
-  case "$choice" in
-    1) MODE=wipe ;;
-    2) MODE=reuse ;;
-    3) MODE=mounted ;;
-    *) die "choix invalide." ;;
-  esac
-fi
+# Cette machine tourne sous NixOS seul : le disque entier est le parcours
+# normal. Les deux autres modes restent accessibles par --esp/--root et
+# --mounted, mais ne sont plus proposés ici pour ne pas encombrer le choix.
+[[ -z $MODE ]] && MODE=wipe
 
 #############################################################################
 # Mode 1 — disque entier
@@ -186,8 +171,9 @@ if [[ $MODE == wipe ]]; then
   step "Partitionnement — disque entier"
 
   if [[ -z $DISK ]]; then
-    lsblk -d -o NAME,SIZE,MODEL
-    read -r -p "$(printf '\033[1;33m?\033[0m Disque à effacer (ex: /dev/nvme0n1) : ')" DISK
+    lsblk -o NAME,SIZE,TYPE,FSTYPE,LABEL,MOUNTPOINTS
+    echo
+    read -r -p "$(printf '\033[1;33m?\033[0m Disque à effacer entièrement (ex: /dev/nvme0n1) : ')" DISK
   fi
   [[ -b $DISK ]] || die "$DISK n'est pas un périphérique bloc."
 
@@ -208,7 +194,7 @@ if [[ $MODE == wipe ]]; then
   echo
   lsblk "$DISK" -o NAME,SIZE,FSTYPE,LABEL || true
   echo
-  warn "TOUT le contenu de $DISK sera détruit, Windows compris."
+  warn "TOUT le contenu de $DISK sera détruit, y compris Windows s'il est encore là."
   confirm "Continuer ?" || die "annulé."
 
   run wipefs -a "$DISK"

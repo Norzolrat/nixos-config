@@ -165,6 +165,7 @@
         hardwareConfig                 # généré par install.sh, propre au disque
         ./options.nix
         ./system.nix                   # hostname, locale, flakes, gc
+        ./boot.nix                     # systemd-boot, splash, démarrage rapide
         ./matebook-gt.nix              # le module matériel
         ./desktop.nix                  # niri + noctalia
         ./apps.nix                     # spotify, discord, bureautique
