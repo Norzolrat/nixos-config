@@ -130,8 +130,17 @@
         echo "  fmt          formater tous les .nix"
         echo "───────────────────────────────────────────────"
 
+        # --cores/--max-jobs bridés volontairement. Par défaut Nix prend tous
+        # les cœurs, et mksquashfs alloue par thread : sur une machine à 22
+        # cœurs le pic dépasse 15 Go et l'OOM killer emporte la VM WSL entière
+        # (« Catastrophic failure », Wsl/Service/E_UNEXPECTED). Avec 6 cœurs le
+        # pic retombe à 3,4 Go pour un build de moins de 4 minutes.
+        # Passe d'autres valeurs en argument pour écraser celles-ci.
+        # Côté Windows, %USERPROFILE%\.wslconfig complète le garde-fou :
+        # memory=20GB et swap=32GB, sinon un pic reste capable de tuer la VM.
         build-iso() {
-          nom build .#nixosConfigurations.iso.config.system.build.isoImage "$@"
+          nom build --cores 6 --max-jobs 4 \
+            .#nixosConfigurations.iso.config.system.build.isoImage "$@"
         }
         # Ciblé sur l'ISO : « nix flake check » évaluerait aussi #matebook,
         # qui exige un hardware-configuration.nix propre à la machine.

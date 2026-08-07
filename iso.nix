@@ -113,8 +113,14 @@
   # sont dans /etc/nixos-flake.
   environment.etc."nixos-flake".source = ./.;
 
+  # C'est image.baseName qui nomme réellement le fichier produit et le chemin
+  # du store. isoImage.isoName, l'ancien nom de l'option, est encore accepté
+  # comme alias vers image.fileName — mais fileName n'est pas ce que le
+  # constructeur d'ISO utilise, si bien que le nom demandé était silencieusement
+  # ignoré : l'image sortait en « nixos-26.11.<date>-x86_64-linux.iso ».
+  image.baseName = lib.mkForce "nixos-matebook-live";
+
   isoImage = {
-    isoName = lib.mkForce "nixos-matebook-live.iso";
     volumeID = lib.mkForce "NIXOS_MBGT";
     makeEfiBootable = true;
     makeUsbBootable = true;
