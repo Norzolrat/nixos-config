@@ -62,6 +62,16 @@ output "HDMI-A-1" {
     position x=1920 y=0
 }
 
+// Filet de sécurité si niri se fige encore au démarrage avec l'eGPU branché.
+// niri énumère toutes les cartes DRM et en ajoute une comme GPU de rendu ;
+// cette ligne le force sur l'iGPU Arc. Normalement inutile : nouveau est
+// blacklisté (voir matebook-gt.nix / iso.nix), donc l'eGPU n'expose aucun
+// nœud DRM tant qu'on n'a pas démarré sur l'entrée « egpu ».
+// Vérifie le bon nœud avant de décommenter : `ls -l /dev/dri/by-path/`.
+// debug {
+//     render-drm-device "/dev/dri/renderD128"
+// }
+
 //////////////////////////////////////////////////////////////////////
 // Disposition
 //////////////////////////////////////////////////////////////////////

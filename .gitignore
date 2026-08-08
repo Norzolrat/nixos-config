@@ -1,3 +1,7 @@
 result
 .direnv
 .envrc
+
+# Artefacts de build : reconstructibles depuis iso.nix, et au-delà de la limite
+# de 100 Mo par fichier de GitHub.
+*.iso

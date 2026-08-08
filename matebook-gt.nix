@@ -29,7 +29,24 @@
     # Laisse le noyau gérer les ports PCIe : indispensable pour le hotplug
     # Thunderbolt de l'eGPU.
     "pcie_ports=native"
+
+    # Second verrou contre nouveau : agit avant que modprobe.d ne soit lu.
+    "nouveau.modeset=0"
   ];
+
+  # Même piège que dans l'ISO : la génération par défaut n'a pas le pilote
+  # NVIDIA (il est confiné à la spécialisation « egpu »), donc udev chargerait
+  # nouveau dès que la 4070 arrive sur le bus. nouveau ne gère pas une Ada
+  # Lovelace derrière un lien Thunderbolt : init GSP en timeout, erreurs AER,
+  # gel puis redémarrage — typiquement au lancement du compositeur, qui est ce
+  # qui ouvre les nœuds DRM en premier.
+  #
+  # Sans nouveau, brancher l'eGPU sur le boot par défaut devient inoffensif :
+  # la carte reste visible par lspci et boltctl, simplement inutilisée. C'est
+  # exactement le comportement voulu, le rendu se faisant via l'entrée « egpu ».
+  # (Cette entrée-là charge le pilote NVIDIA, qui blackliste nouveau de son
+  # côté : la ligne ci-dessous n'y change rien.)
+  boot.blacklistedKernelModules = [ "nouveau" ];
 
   #############################################################################
   # Boot

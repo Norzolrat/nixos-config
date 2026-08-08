@@ -55,7 +55,29 @@
   # ne fonctionnent dans le live.
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
-  boot.kernelParams = [ "pcie_ports=native" ];  # hotplug Thunderbolt / eGPU
+  boot.kernelParams = [
+    "pcie_ports=native"   # hotplug Thunderbolt / eGPU
+
+    # Deuxième verrou contre nouveau (voir ci-dessous) : agit même si le
+    # modprobe.d n'est pas encore lu, et empêche le KMS de prendre la carte.
+    "nouveau.modeset=0"
+  ];
+
+  # LE point qui fait geler puis redémarrer la machine quand l'eGPU est
+  # branché. L'ISO n'embarque pas le pilote NVIDIA (choix assumé, voir plus
+  # bas), mais nouveau, lui, est dans le noyau et udev le charge tout seul dès
+  # que la 4070 apparaît sur le bus. Or nouveau ne sait pas initialiser une Ada
+  # Lovelace (AD104) au bout d'un tunnel Thunderbolt : l'init GSP part en
+  # timeout, le lien PCIe encaisse des erreurs AER, et la machine se fige.
+  #
+  # Le gel tombe pile au démarrage de niri parce que c'est à ce moment que
+  # quelque chose ouvre enfin les nœuds DRM : niri énumère TOUTES les cartes
+  # via libseat/udev et ajoute l'eGPU comme GPU secondaire. Il se bloque donc
+  # sur un périphérique déjà mort, et le watchdog finit par redémarrer.
+  #
+  # Interdire nouveau ne coûte rien ici : le live sert à vérifier que la 4070
+  # est vue du bus, ce que lspci et boltctl font sans aucun pilote graphique.
+  boot.blacklistedKernelModules = [ "nouveau" ];
 
   # iGPU Arc (Meteor Lake)
   hardware.graphics = {
