@@ -44,6 +44,27 @@ in
   };
 
   #############################################################################
+  # IA locale — Ollama, pour le plugin Noctalia « Assistant Panel »
+  #############################################################################
+  # ollama-vulkan accélère via l'iGPU Intel Arc (Meteor Lake) plutôt que le
+  # CPU seul. Écoute uniquement en local (127.0.0.1:11434, valeur par défaut
+  # du module) — pas besoin d'ouvrir le pare-feu.
+  #
+  # Le plugin « Assistant Panel » vient du store de plugins Noctalia, pas de
+  # Nix : installe-le toi-même (bouton ⬇ dans les réglages Noctalia), puis
+  # configure-le avec :
+  #   AI Provider : OpenAI Compatible
+  #   Local Mode  : ON
+  #   Base URL    : http://localhost:11434/v1/chat/completions
+  #   Model       : qwen2.5:7b (déjà téléchargé automatiquement ci-dessous)
+  #   API Key     : laisser vide
+  services.ollama = {
+    enable = true;
+    package = pkgs.ollama-vulkan;
+    loadModels = [ "qwen2.5:7b" ];
+  };
+
+  #############################################################################
   # Shell
   #############################################################################
   # L'activation système est obligatoire : c'est elle qui inscrit fish dans
