@@ -76,6 +76,14 @@
   zramSwap.enable = true;
 
   #############################################################################
+  # Conteneurs
+  #############################################################################
+  # pkgs.docker embarque déjà le plugin `docker compose` (composeSupport =
+  # true par défaut) : rien d'autre à installer pour la commande compose.
+
+  virtualisation.docker.enable = true;
+
+  #############################################################################
   # Comptes
   #############################################################################
 
