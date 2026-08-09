@@ -20,7 +20,9 @@ in
 
     vim
     codex
+    claude-code
     bitwarden-desktop
+    bitwarden-cli
     git
   ];
 
