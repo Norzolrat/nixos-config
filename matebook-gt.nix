@@ -34,18 +34,11 @@
     "nouveau.modeset=0"
   ];
 
-  # Même piège que dans l'ISO : la génération par défaut n'a pas le pilote
-  # NVIDIA (il est confiné à la spécialisation « egpu »), donc udev chargerait
-  # nouveau dès que la 4070 arrive sur le bus. nouveau ne gère pas une Ada
-  # Lovelace derrière un lien Thunderbolt : init GSP en timeout, erreurs AER,
-  # gel puis redémarrage — typiquement au lancement du compositeur, qui est ce
-  # qui ouvre les nœuds DRM en premier.
-  #
-  # Sans nouveau, brancher l'eGPU sur le boot par défaut devient inoffensif :
-  # la carte reste visible par lspci et boltctl, simplement inutilisée. C'est
-  # exactement le comportement voulu, le rendu se faisant via l'entrée « egpu ».
-  # (Cette entrée-là charge le pilote NVIDIA, qui blackliste nouveau de son
-  # côté : la ligne ci-dessous n'y change rien.)
+  # nouveau ne gère pas une Ada Lovelace derrière un lien Thunderbolt : init
+  # GSP en timeout, erreurs AER, gel puis redémarrage — typiquement au
+  # lancement du compositeur, qui est ce qui ouvre les nœuds DRM en premier.
+  # Le pilote NVIDIA étant désactivé pour le moment (cf. plus bas), c'est ce
+  # blacklist qui empêche tout module de réclamer la carte au branchement.
   boot.blacklistedKernelModules = [ "nouveau" ];
 
   #############################################################################
@@ -83,36 +76,27 @@
   # Après le premier branchement : `boltctl list` puis `boltctl enroll <uuid>`
 
   #############################################################################
-  # eGPU NVIDIA RTX 4070 — dans une spécialisation
+  # eGPU NVIDIA RTX 4070 — DÉSACTIVÉ pour le moment (freeze au boot/branchement)
   #############################################################################
-  # Le pilote NVIDIA activé en permanence perturbe la session quand l'eGPU est
-  # débranché. On garde donc un boot « portable seul » par défaut, et une entrée
-  # de menu dédiée à l'eGPU. Branche le boîtier AVANT de démarrer dessus.
+  # Tentative « toujours installé, actif seulement si branché » : a provoqué
+  # un freeze. Tout le bloc nvidia est coupé le temps de comprendre pourquoi.
+  # nouveau reste blacklisté juste en dessous (section noyau) comme filet de
+  # sécurité : sans lui ET sans nvidia, brancher l'eGPU ne ferait rien planter,
+  # la carte serait juste inutilisée.
 
-  specialisation.egpu.configuration = {
-    system.nixos.tags = [ "egpu" ];
-
-    services.xserver.videoDrivers = [ "nvidia" ];
-
-    hardware.nvidia = {
-      # Ada Lovelace (série 40) : les modules noyau ouverts sont recommandés.
-      open = true;
-      modesetting.enable = true;
-      nvidiaSettings = true;
-      package = config.boot.kernelPackages.nvidiaPackages.stable;
-
-      # Pas de PRIME ici : PRIME sert aux GPU internes muxés, pas à un eGPU.
-      # Branche ton écran directement sur la 4070 pour éviter le reverse PRIME
-      # (qui refait passer le rendu par le lien Thunderbolt et coûte des FPS).
-    };
-
-    # X11 reste plus prévisible qu'un Wayland + eGPU. Si tu tiens à Wayland
-    # (Hyprland), ajoute :
-    #   environment.sessionVariables = {
-    #     LIBVA_DRIVER_NAME = "nvidia";
-    #     NVD_BACKEND = "direct";
-    #   };
-  };
+  # services.xserver.videoDrivers = [ "nvidia" ];
+  #
+  # hardware.nvidia = {
+  #   # Ada Lovelace (série 40) : les modules noyau ouverts sont recommandés.
+  #   open = true;
+  #   modesetting.enable = true;
+  #   nvidiaSettings = true;
+  #   package = config.boot.kernelPackages.nvidiaPackages.stable;
+  #
+  #   # Pas de PRIME ici : PRIME sert aux GPU internes muxés, pas à un eGPU.
+  #   # Branche ton écran directement sur la 4070 pour éviter le reverse PRIME
+  #   # (qui refait passer le rendu par le lien Thunderbolt et coûte des FPS).
+  # };
 
   #############################################################################
   # Audio — SOF (Meteor Lake) + codec Realtek ALC256

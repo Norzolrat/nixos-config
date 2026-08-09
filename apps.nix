@@ -17,6 +17,11 @@ in
     libsForQt5.qt5ct
     qt6Packages.qt6ct
     adwaita-icon-theme
+
+    vim
+    codex
+    bitwarden-desktop
+    git
   ];
 
   # Spotify est unfree ; allowUnfree est déjà posé dans matebook-gt.nix.
@@ -49,26 +54,9 @@ in
         ];
       };
 
-    ###########################################################################
-    # Templates Noctalia
-    ###########################################################################
-    # Noctalia écrit ces fichiers de thème À CHAQUE changement de couleur.
-    # Ne laisse JAMAIS home-manager gérer les chemins de sortie ci-dessous :
-    # un symlink read-only vers le store fait échouer l'écriture en silence.
-
-    programs.noctalia-shell.settings.templates = {
-      enableUserTemplates = false;   # true seulement si tu ajoutes les tiens
-      activeTemplates = [
-        { id = "alacritty"; active = true; }
-        { id = "spotify"; active = true; }
-        { id = "discord"; active = true; }
-        { id = "vscode";  active = true; }
-        { id = "zen";     active = true; }
-        { id = "steam";   active = true; }
-        { id = "gtk";     active = true; }
-        { id = "qt";      active = true; }
-      ];
-    };
+    # Réglages Noctalia (templates, wallpaper, etc.) : plus déclarés ici, cf.
+    # le seed dans desktop.nix (Noctalia gère son settings.json lui-même après
+    # le premier démarrage, cf. le commentaire à côté de home.activation).
 
     ###########################################################################
     # Thème GTK / Qt

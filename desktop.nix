@@ -166,24 +166,59 @@ in
   home-manager.useUserPackages = true;
   home-manager.extraSpecialArgs = { inherit inputs; };
 
-  home-manager.users.${username} = { config, ... }: {
-    home.stateVersion = "25.11";
-
-    imports = [
-      inputs.noctalia.homeModules.default
-    ];
-
-    programs.noctalia-shell = {
-      enable = true;
-      settings = {
+  home-manager.users.${username} = { config, lib, pkgs, ... }:
+    let
+      # Seed initial de ~/.config/noctalia/settings.json : Noctalia gère ce
+      # fichier lui-même à l'exécution (couleurs, layout, etc.). Si on le
+      # laissait sous home-manager (xdg.configFile), il serait re-symlinké
+      # vers le store — donc écrasé — à CHAQUE boot, puisque
+      # home-manager-<user>.service se relance à chaque démarrage, pas
+      # seulement à `nixos-rebuild switch`. On ne fournit donc ces valeurs
+      # que comme point de départ, copiées une seule fois (cf. activation
+      # script plus bas) si le fichier n'existe pas encore.
+      noctaliaSettingsSeed = pkgs.writeText "noctalia-settings-seed.json" (builtins.toJSON {
         general = {
           # Pas de capteur d'empreintes exploitable sur cette machine.
           allowPasswordWithFprintd = false;
           lockOnSuspend = true;
         };
         appLauncher.terminalCommand = "alacritty -e";
-      };
-    };
+        templates = {
+          enableUserTemplates = false;   # true seulement si tu ajoutes les tiens
+          activeTemplates = [
+            { id = "alacritty"; active = true; }
+            { id = "spotify"; active = true; }
+            { id = "discord"; active = true; }
+            { id = "vscode";  active = true; }
+            { id = "zen";     active = true; }
+            { id = "steam";   active = true; }
+            { id = "gtk";     active = true; }
+            { id = "qt";      active = true; }
+          ];
+        };
+        wallpaper = {
+          enabled = true;
+          directory = "${config.home.homeDirectory}/Pictures/Wallpapers";
+          fillMode = "crop";
+          setWallpaperOnAllMonitors = true;
+        };
+      });
+    in
+    {
+    home.stateVersion = "25.11";
+
+    imports = [
+      inputs.noctalia.homeModules.default
+    ];
+
+    programs.noctalia-shell.enable = true;
+
+    home.activation.noctaliaSettingsSeed = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      target="${config.home.homeDirectory}/.config/noctalia/settings.json"
+      if [ ! -e "$target" ]; then
+        install -Dm644 ${noctaliaSettingsSeed} "$target"
+      fi
+    '';
 
     ###########################################################################
     # fish
@@ -243,13 +278,6 @@ in
 
     # Fond par défaut du shell, à l'emplacement où Noctalia le cherche.
     home.file.".config/wallpapers/default.png".source = ./wallpapers/default.png;
-
-    programs.noctalia-shell.settings.wallpaper = {
-      enabled = true;
-      directory = "${config.home.homeDirectory}/Pictures/Wallpapers";
-      fillMode = "crop";
-      setWallpaperOnAllMonitors = true;
-    };
 
     # Config niri en KDL brut plutôt qu'en attrsets Nix : ta config est
     # trop volumineuse pour être traduite sans erreurs, et le KDL se

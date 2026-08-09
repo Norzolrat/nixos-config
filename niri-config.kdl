@@ -246,15 +246,22 @@ binds {
     Mod+D           { spawn "noctalia-shell" "ipc" "call" "launcher" "toggle"; }
     Mod+A           { spawn "noctalia-shell" "ipc" "call" "controlCenter" "toggle"; }
     Mod+I           { spawn "noctalia-shell" "ipc" "call" "settings" "toggle"; }
-    Mod+L           { spawn "noctalia-shell" "ipc" "call" "lockScreen" "toggle"; }
-    Mod+V           { spawn "noctalia-shell" "ipc" "call" "plugin:clipper" "openPanel"; }
-    Mod+Period      { spawn "noctalia-shell" "ipc" "call" "launcher" "calculator"; }
+    Mod+L           { spawn "noctalia-shell" "ipc" "call" "lockScreen" "lock"; }  // lockScreen n'a pas de toggle()
+    // "plugin:clipper" n'est pas une cible IPC valide (vérifié via
+    // `noctalia-shell ipc show` : les cibles réelles sont listées là, pas de
+    // "clipper"). La bonne cible pour l'historique clipboard est
+    // `launcher clipboard`, qui ouvre le Launcher sur l'onglet Clipboard.
+    Mod+V           { spawn "noctalia-shell" "ipc" "call" "launcher" "clipboard"; }
+    Mod+Shift+V     { spawn "noctalia-shell" "ipc" "call" "launcher" "clipboard"; }  // HYPR: ancien raccourci historique clipboard
+    // launcher n'a pas de fonction calculator() : le calcul se fait en tapant
+    // directement une expression dans le launcher général.
+    Mod+Period      { spawn "noctalia-shell" "ipc" "call" "launcher" "toggle"; }
     Mod+Slash       { spawn "noctalia-shell" "ipc" "call" "notifications" "toggleHistory"; }
     Mod+Alt+Slash   { spawn "noctalia-shell" "ipc" "call" "notifications" "toggleDND"; }
     Mod+Alt+D       { spawn "noctalia-shell" "ipc" "call" "darkMode" "toggle"; }
     Ctrl+Mod+T      { spawn "noctalia-shell" "ipc" "call" "wallpaper" "random"; }
     Mod+Shift+E     { spawn "noctalia-shell" "ipc" "call" "sessionMenu" "toggle"; }
-    Ctrl+Alt+Delete { spawn "noctalia-shell" "ipc" "call" "powerPanel" "toggle"; }
+    Ctrl+Alt+Delete { spawn "noctalia-shell" "ipc" "call" "sessionMenu" "toggle"; }  // powerPanel n'existe pas ; sessionMenu est l'équivalent
 
     // Aide-mémoire des raccourcis, natif dans niri. C'est le bind par
     // défaut du compositeur, celui qui te manquait.
@@ -296,6 +303,14 @@ binds {
     Mod+F         { maximize-column; }        // HYPR: fullscreen,1
     Mod+Alt+F     { fullscreen-window; }      // HYPR: fullscreen,0
 
+    // HYPR: fullscreen,0 + windowrule opacity 1.0 override,fullscreen:1 —
+    // niri n'a pas de match "is-fullscreen" en window-rule (donc pas moyen
+    // de forcer l'opacité automatiquement pour toute fenêtre fullscreen),
+    // on chaîne donc les deux actions à la main. toggle-window-rule-opacity
+    // bascule entre l'opacité déclarée (0.9) et 1.0, donc rappuyer sur ce
+    // raccourci en sortant du fullscreen restaure aussi la transparence.
+    Mod+Shift+F   { spawn "sh" "-c" "niri msg action fullscreen-window && niri msg action toggle-window-rule-opacity"; }
+
     // HYPR: Super+P (pin) — pas d'équivalent niri. Le plus proche est de
     // rendre la fenêtre flottante, qui reste alors au-dessus des tuiles.
 
@@ -317,6 +332,12 @@ binds {
 
     Mod+Home { focus-column-first; }
     Mod+End  { focus-column-last; }
+
+    // *-next plutôt que *-right : avec plus de deux écrans, -right ne fait
+    // rien s'il n'y a pas de moniteur physiquement à droite, alors que -next
+    // cycle dans l'ordre des écrans (et boucle sur le premier à la fin).
+    Mod+P       { focus-monitor-next; }
+    Mod+Shift+P { move-window-to-monitor-next; }
 
     // HYPR: splitratio -0.1 / +0.1
     Mod+Semicolon  { set-column-width "-10%"; }
