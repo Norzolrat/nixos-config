@@ -26,8 +26,12 @@ input {
         middle-emulation
         // HYPR: scroll_factor = 0.5
         scroll-factor 0.5
-        // HYPR: clickfinger_behavior = false → clic par zone, pas par doigts
-        click-method "button-areas"
+        // "button-areas" (clic dans le coin bas-droit) ne déclenchait pas le
+        // clic droit sur ce pad : seulement 70 mm de profondeur, la zone est
+        // trop petite. clickfinger (2 doigts = clic droit, n'importe où sur
+        // le pad) est l'autre méthode supportée par ce matériel (vérifié via
+        // `libinput list-devices` : *button-areas clickfinger).
+        click-method "clickfinger"
     }
 
     // HYPR: follow_mouse = 1
