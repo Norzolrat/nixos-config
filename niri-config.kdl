@@ -26,15 +26,15 @@ input {
         middle-emulation
         // HYPR: scroll_factor = 0.5
         scroll-factor 0.5
-        // Deux chemins indépendants vers le clic droit, au cas où ce petit
-        // pad (70 mm) gère mal la détection à 2 doigts sur l'un des deux :
+        // Deux chemins indépendants vers le clic droit :
         // - tap-button-map : un TAP à 2 doigts (effleurement bref, pas de
-        //   pression physique) = clic droit. Indépendant de click-method.
-        // - click-method clickfinger : une PRESSION à 2 doigts (n'importe
-        //   où sur le pad) = clic droit. "button-areas" (clic dans le coin
-        //   bas-droit) ne marchait pas, zone trop petite sur ce pad.
+        //   pression physique) = clic droit. Indépendant de click-method,
+        //   déjà validé, fonctionne bien.
+        // - click-method button-areas : une PRESSION physique dans le coin
+        //   bas-droit = clic droit (clickfinger ne permet pas ça, il ne
+        //   distingue que le nombre de doigts, pas la position).
         tap-button-map "left-right-middle"
-        click-method "clickfinger"
+        click-method "button-areas"
     }
 
     // HYPR: follow_mouse = 1

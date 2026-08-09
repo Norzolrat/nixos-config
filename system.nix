@@ -84,6 +84,17 @@
   virtualisation.docker.enable = true;
 
   #############################################################################
+  # Machines virtuelles (KVM/QEMU)
+  #############################################################################
+  # Le CPU expose vmx et /dev/kvm existe déjà (kvm_intel chargé) : rien à
+  # activer au niveau noyau, juste la couche libvirt/QEMU par-dessus.
+
+  virtualisation.libvirtd.enable = true;
+  programs.virt-manager.enable = true;
+  # programs.dconf.enable est déjà à true ailleurs dans la config (dépendance
+  # transitive) : virt-manager en a besoin pour retenir ses réglages GTK.
+
+  #############################################################################
   # Comptes
   #############################################################################
 

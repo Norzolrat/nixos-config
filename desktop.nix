@@ -30,16 +30,53 @@ in
     };
   };
 
-  # Greeter assorti au thème Noctalia (fond, palette, police synchronisables
-  # depuis Settings → Security → Noctalia Greeter → Sync Now). Le module
-  # active services.greetd et accounts-daemon via mkDefault, donc ne PAS
-  # définir services.greetd ici en dur, ça écraserait ces valeurs par défaut.
+  # Greeter assorti au thème Noctalia. Le « Sync Now » (Settings → Security →
+  # Noctalia Greeter) documenté par Noctalia ne fonctionne qu'avec Noctalia
+  # v5 — on est sur legacy-v4, donc ce bouton ne fait rien chez nous. À la
+  # place : scheme "Synced" + palette manuelle (toujours prioritaire sur la
+  # sync de toute façon), recopiée depuis ~/.config/noctalia/colors.json —
+  # donc un instantané, PAS un lien live : si tu changes de fond d'écran ou
+  # de palette dans Noctalia, il faudra remettre ces valeurs à jour ici.
+  #
+  # Le module active services.greetd et accounts-daemon via mkDefault, donc
+  # ne PAS définir services.greetd ici en dur, ça écraserait ces défauts.
   programs.noctalia-greeter = {
     enable = true;
-    settings.cursor = {
-      theme = "Bibata-Modern-Classic";
-      size = 24;
-      path = "${pkgs.bibata-cursors}/share/icons";
+    settings = {
+      cursor = {
+        theme = "Bibata-Modern-Classic";
+        size = 24;
+        path = "${pkgs.bibata-cursors}/share/icons";
+      };
+      appearance = {
+        scheme = "Synced";
+        theme_mode = "dark";
+        font_family = "DejaVu Sans Mono";
+        palette = {
+          primary = "#e0c0ac";
+          on_primary = "#402c1e";
+          secondary = "#d4c3b9";
+          on_secondary = "#392e27";
+          tertiary = "#cac8aa";
+          on_tertiary = "#32311c";
+          error = "#ffb4ab";
+          on_error = "#690005";
+          surface = "#151311";
+          on_surface = "#e8e1de";
+          surface_variant = "#221f1d";
+          on_surface_variant = "#d2c4bb";
+          outline = "#4f453e";
+          shadow = "#000000";
+          hover = "#cac8aa";
+          on_hover = "#32311c";
+        };
+        wallpaper = {
+          # Fond réellement affiché sur l'écran interne (eDP-1), vérifié dans
+          # ~/.cache/noctalia/wallpapers.json — pas une supposition.
+          path = "${config.users.users.${username}.home}/Pictures/Wallpapers/default.jpg";
+          fill_mode = "crop";
+        };
+      };
     };
   };
 
@@ -75,7 +112,7 @@ in
   users.users.${username} = {
     isNormalUser = true;
     shell = pkgs.fish;
-    extraGroups = [ "wheel" "networkmanager" "video" "input" "docker" ];
+    extraGroups = [ "wheel" "networkmanager" "video" "input" "docker" "libvirtd" ];
   };
 
   security.polkit.enable = true;
@@ -89,6 +126,11 @@ in
   # profil de puissance de Noctalia restent vides.
 
   networking.networkmanager.enable = true;
+  # Plugin OpenVPN pour NetworkManager : importe/gère des profils .ovpn
+  # directement depuis le panneau réseau de Noctalia, pas besoin de config
+  # déclarative séparée (services.openvpn.servers) tant qu'aucun profil
+  # précis n'est fourni.
+  networking.networkmanager.plugins = [ pkgs.networkmanager-openvpn ];
   hardware.bluetooth.enable = true;
   services.upower.enable = true;
   # services.power-profiles-daemon est déjà activé dans matebook-gt.nix
@@ -128,6 +170,7 @@ in
     jq                # utilisé par tes scripts
     libnotify         # notify-send
     bibata-cursors    # HYPR: Bibata-Modern-Classic
+    openvpn           # client CLI, pour lancer un .ovpn hors NetworkManager
   ]);
 
   # HYPR: exec-once = fcitx5
