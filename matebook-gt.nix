@@ -172,6 +172,10 @@
     usbutils
     lm_sensors
     nvtopPackages.full
+    alsa-utils
+    libinput
+    v4l-utils
+    libva-utils
   ];
 
   #############################################################################
