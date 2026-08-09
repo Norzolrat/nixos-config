@@ -32,6 +32,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Greeter greetd assorti au thème Noctalia (remplace tuigreet).
+    noctalia-greeter = {
+      url = "github:noctalia-dev/noctalia-greeter";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Spicetify : indispensable sur NixOS, Spotify ne peut pas être patché
     # en place dans le store.
     spicetify-nix = {
@@ -61,7 +67,7 @@
     ];
   };
 
-  outputs = inputs@{ self, nixpkgs, home-manager, lanzaboote, niri, ... }:
+  outputs = inputs@{ self, nixpkgs, home-manager, lanzaboote, niri, noctalia-greeter, ... }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs {
@@ -164,6 +170,7 @@
         ./iso.nix
         niri.nixosModules.niri
         home-manager.nixosModules.home-manager
+        noctalia-greeter.nixosModules.default
       ];
     };
 
@@ -183,6 +190,7 @@
         lanzaboote.nixosModules.lanzaboote
         niri.nixosModules.niri
         home-manager.nixosModules.home-manager
+        noctalia-greeter.nixosModules.default
       ];
     };
   };

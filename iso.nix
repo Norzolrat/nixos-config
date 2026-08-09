@@ -28,8 +28,8 @@
   #############################################################################
   # Le profil d'installation ouvre une session getty automatique ; on la coupe
   # au profit de greetd, qui lance directement la session niri sans mot de
-  # passe. default_session (tuigreet) reste défini par desktop.nix et sert de
-  # repli si tu quittes la session.
+  # passe. default_session (noctalia-greeter) reste défini par desktop.nix et
+  # sert de repli si tu quittes la session.
 
   services.getty.autologinUser = lib.mkForce null;
 

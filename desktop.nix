@@ -30,12 +30,16 @@ in
     };
   };
 
-  # Gestionnaire de session. tuigreet est léger et n'impose pas de DE.
-  services.greetd = {
+  # Greeter assorti au thème Noctalia (fond, palette, police synchronisables
+  # depuis Settings → Security → Noctalia Greeter → Sync Now). Le module
+  # active services.greetd et accounts-daemon via mkDefault, donc ne PAS
+  # définir services.greetd ici en dur, ça écraserait ces valeurs par défaut.
+  programs.noctalia-greeter = {
     enable = true;
-    settings.default_session = {
-      command = "${lib.getExe pkgs.tuigreet} --time --remember --cmd niri-session";
-      user = "greeter";
+    settings.cursor = {
+      theme = "Bibata-Modern-Classic";
+      size = 24;
+      path = "${pkgs.bibata-cursors}/share/icons";
     };
   };
 
