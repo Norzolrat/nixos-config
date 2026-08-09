@@ -68,9 +68,10 @@ output "HDMI-A-1" {
 // blacklisté (voir matebook-gt.nix / iso.nix), donc l'eGPU n'expose aucun
 // nœud DRM tant qu'on n'a pas démarré sur l'entrée « egpu ».
 // Vérifie le bon nœud avant de décommenter : `ls -l /dev/dri/by-path/`.
-// debug {
+debug {
 //     render-drm-device "/dev/dri/renderD128"
-// }
+    render-drm-device "/dev/dri/by-path/pci-0000:00:02.0-render"
+}
 
 //////////////////////////////////////////////////////////////////////
 // Disposition
