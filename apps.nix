@@ -18,6 +18,7 @@ in
     qt6Packages.qt6ct
     adwaita-icon-theme
 
+    thunderbird
     vim
     codex
     claude-code
