@@ -190,12 +190,17 @@ environment {
     _JAVA_AWT_WM_NONREPARENTING "1"
     ELECTRON_OZONE_PLATFORM_HINT "auto"
     NIXOS_OZONE_WL "1"
-    // Méthode de saisie fcitx5
-    QT_IM_MODULE "fcitx"
+    // Méthode de saisie fcitx5.
+    // QT_IM_MODULE et INPUT_METHOD sont volontairement absents : en mode
+    // waylandFrontend (cf. i18n.inputMethod dans desktop.nix) les applis
+    // Wayland natives, Qt6 compris, passent par text-input-v3. Les reposer
+    // ici annulerait le correctif et ferait réapparaître l'avertissement.
+    // Ce qui suit ne concerne que les applis XWayland, qui n'ont pas accès
+    // au protocole Wayland et ont donc encore besoin du pont X11.
     XMODIFIERS "@im=fcitx"
     SDL_IM_MODULE "fcitx"
+    // GLFW ne parle que le protocole ibus, que fcitx5 sait émuler.
     GLFW_IM_MODULE "ibus"
-    INPUT_METHOD "fcitx"
     // HYPR: QT_QPA_PLATFORMTHEME = kde → sans Plasma, on passe par qt6ct
     QT_QPA_PLATFORMTHEME "qt6ct"
     DISPLAY ":0"

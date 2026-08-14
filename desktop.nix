@@ -131,7 +131,41 @@ in
   # déclarative séparée (services.openvpn.servers) tant qu'aucun profil
   # précis n'est fourni.
   networking.networkmanager.plugins = [ pkgs.networkmanager-openvpn ];
-  hardware.bluetooth.enable = true;
+  hardware.bluetooth = {
+    enable = true;
+    powerOnBoot = true;
+
+    # Sans bloc `settings`, aucun /etc/bluetooth/main.conf n'est généré et
+    # bluez tourne sur ses défauts, qui sont volontairement conservateurs.
+    settings = {
+      General = {
+        # Expose le niveau de batterie des périphériques (casques, souris)
+        # sur DBus via l'interface Battery Provider. C'est expérimental côté
+        # bluez, donc désactivé par défaut : sans ça le widget Bluetooth de
+        # Noctalia n'affiche jamais de pourcentage de batterie.
+        Experimental = true;
+
+        # Autorise un casque à exposer A2DP (musique) et HFP (micro) en même
+        # temps. Par défaut bluez n'en garde qu'un, ce qui force un
+        # aller-retour de profil — et une coupure d'audio — dès qu'une visio
+        # réclame le micro.
+        MultiProfile = "multiple";
+
+        # Le contrôleur reste en page scan : un périphérique déjà appairé se
+        # reconnecte en une poignée de secondes au lieu d'attendre le
+        # prochain cycle. Coût : quelques mW en veille.
+        FastConnectable = true;
+      };
+
+      Policy = {
+        # Réappairage automatique après une coupure ou une sortie de veille.
+        # Les intervalles sont en secondes, un par tentative.
+        AutoEnable = true;
+        ReconnectAttempts = 7;
+        ReconnectIntervals = "1,2,4,8,16,32,64";
+      };
+    };
+  };
   services.upower.enable = true;
   # services.power-profiles-daemon est déjà activé dans matebook-gt.nix
 
@@ -178,6 +212,14 @@ in
     enable = true;
     type = "fcitx5";
     fcitx5.addons = with pkgs; [ fcitx5-gtk ];
+
+    # Sans ça le module pose GTK_IM_MODULE=fcitx et QT_IM_MODULE=fcitx, qui
+    # forcent les applis à passer par le pont X11 de fcitx alors que niri
+    # expose déjà le protocole Wayland text-input-v3. Les deux chemins se
+    # marchent dessus : c'est ce que fcitx signale au démarrage. En mode
+    # waylandFrontend, les variables ne sont plus posées et les applis
+    # Wayland parlent directement au frontend natif.
+    fcitx5.waylandFrontend = true;
   };
 
   # HYPR: exec-once = hypridle — hypridle est spécifique à Hyprland.
