@@ -1,5 +1,11 @@
-// Configuration niri — traduite depuis la config Hyprland de normi.
-// Les commentaires « HYPR: » rappellent l'origine de chaque réglage.
+// Configuration niri.
+//
+// Les raccourcis portent un attribut hotkey-overlay-title : c'est lui qui
+// sert de description, à la fois dans l'aide-mémoire natif de niri et dans
+// le plugin Noctalia « keybind-cheatsheet ». Dans le bloc binds, une ligne
+// de la forme //"Nom" ouvre une catégorie pour le plugin — d'où les
+// en-têtes entre guillemets. Un commentaire ordinaire ne doit donc jamais
+// commencer par un guillemet, sous peine de créer une catégorie fantôme.
 
 //////////////////////////////////////////////////////////////////////
 // Entrées
@@ -10,7 +16,6 @@ input {
         xkb {
             layout "us"
         }
-        // HYPR: repeat_delay 250 / repeat_rate 35
         repeat-delay 250
         repeat-rate 35
         numlock
@@ -18,13 +23,9 @@ input {
 
     touchpad {
         tap
-        // HYPR: natural_scroll = yes
         natural-scroll
-        // HYPR: disable_while_typing = true
         dwt
-        // HYPR: middle_button_emulation = true
         middle-emulation
-        // HYPR: scroll_factor = 0.5
         scroll-factor 0.5
         // Deux chemins indépendants vers le clic droit :
         // - tap-button-map : un TAP à 2 doigts (effleurement bref, pas de
@@ -37,7 +38,6 @@ input {
         click-method "button-areas"
     }
 
-    // HYPR: follow_mouse = 1
     focus-follows-mouse
 
     // L'écran tactile FTSC1000 DOIT être associé explicitement à la dalle
@@ -53,7 +53,6 @@ input {
 // Sorties
 //////////////////////////////////////////////////////////////////////
 
-// HYPR: monitor=eDP-1,preferred,auto,1.5
 output "eDP-1" {
     mode "2880x1920@120.000"
     scale 1.5
@@ -62,7 +61,6 @@ output "eDP-1" {
     // variable-refresh-rate on-demand=true
 }
 
-// HYPR: monitor=HDMI-A-1,1920x1080@60,0x0,1.0
 output "HDMI-A-1" {
     mode "1920x1080@60.000"
     scale 1.0
@@ -85,7 +83,6 @@ debug {
 //////////////////////////////////////////////////////////////////////
 
 layout {
-    // HYPR: gaps_in = 4, gaps_out = 5
     gaps 8
 
     center-focused-column "never"
@@ -97,7 +94,6 @@ layout {
     }
     default-column-width { proportion 0.5; }
 
-    // HYPR: col.active_border = rgba(0DB7D4FF), border_size = 1
     focus-ring {
         width 2
         active-color "#0DB7D4"
@@ -108,7 +104,6 @@ layout {
         off
     }
 
-    // HYPR: shadow { range 30, offset 0 2, color rgba(00000010) }
     shadow {
         on
         softness 30
@@ -129,19 +124,19 @@ layout {
 // Démarrage
 //////////////////////////////////////////////////////////////////////
 
-// HYPR: exec-once = qs -c noctalia-shell
+// Le shell : barre, panneaux, verrouillage, fond d'écran.
 spawn-at-startup "noctalia-shell"
 
-// HYPR: special workspace (Super+S). niri n'a PAS de scratchpad qui se
-// superpose au workspace courant. L'approximation la plus proche est un
-// workspace nommé, atteignable d'une touche depuis n'importe où.
+// niri n'a pas de scratchpad qui se superpose au workspace courant.
+// L'approximation la plus proche est un workspace nommé, atteignable d'une
+// touche depuis n'importe où (Mod+S).
 // Différence à accepter : il REMPLACE la vue au lieu de la recouvrir.
 workspace "scratch"
 
-// HYPR: exec-once = fcitx5
+// Méthode de saisie (voir i18n.inputMethod dans desktop.nix).
 spawn-at-startup "fcitx5"
 
-// HYPR: exec-once = easyeffects --gapplication-service
+// Traitement audio en service, sans fenêtre.
 spawn-at-startup "easyeffects" "--gapplication-service"
 
 // Les surveillants de presse-papiers ne sont PAS relancés ici : ton
@@ -149,9 +144,9 @@ spawn-at-startup "easyeffects" "--gapplication-service"
 // et clipboardWatchImageCommand. Les dupliquer créerait des doublons
 // dans l'historique.
 
-// HYPR: exec-once = hypridle → remplacé par swayidle (voir desktop.nix)
+// La gestion de l'inactivité passe par swayidle (voir desktop.nix).
 
-// HYPR: exec-once = lockScreen toggle au démarrage
+// Verrouiller dès l'ouverture de session, si tu le souhaites un jour :
 // spawn-at-startup "noctalia-shell" "ipc" "call" "lockScreen" "lock"
 
 //////////////////////////////////////////////////////////////////////
@@ -160,30 +155,31 @@ spawn-at-startup "easyeffects" "--gapplication-service"
 
 prefer-no-csd
 
-// HYPR: le script de capture écrivait dans Pictures/Screenshots
 screenshot-path "~/Pictures/Screenshots/Screenshot_%Y-%m-%d_%H.%M.%S.png"
 
-// HYPR: cursor Bibata-Modern-Classic 24
+// L'aide-mémoire natif ne s'affiche plus à l'ouverture de session : il est
+// remplacé par le plugin Noctalia, appelé à la demande par Mod+Shift+Slash.
+hotkey-overlay {
+    skip-at-startup
+}
+
 cursor {
     xcursor-theme "Bibata-Modern-Classic"
     xcursor-size 24
 }
 
-// HYPR: animations rapides (emphasizedDecel, durées 1-3)
 animations {
     slowdown 0.7
 }
 
-// HYPR: gesture = 4, horizontal, workspace
-// niri gère nativement le balayage 3 doigts pour les colonnes et
-// les workspaces, sans configuration.
+// niri gère nativement le balayage 3 doigts pour les colonnes et les
+// workspaces, sans configuration. Seuls les coins actifs sont désactivés.
 gestures {
     hot-corners {
         off
     }
 }
 
-// HYPR: env.conf
 environment {
     QT_QPA_PLATFORM "wayland"
     MOZ_ENABLE_WAYLAND "1"
@@ -201,7 +197,7 @@ environment {
     SDL_IM_MODULE "fcitx"
     // GLFW ne parle que le protocole ibus, que fcitx5 sait émuler.
     GLFW_IM_MODULE "ibus"
-    // HYPR: QT_QPA_PLATFORMTHEME = kde → sans Plasma, on passe par qt6ct
+    // Sans Plasma, le thème des applis Qt est piloté par qt6ct.
     QT_QPA_PLATFORMTHEME "qt6ct"
     DISPLAY ":0"
 }
@@ -210,20 +206,20 @@ environment {
 // Règles de fenêtres
 //////////////////////////////////////////////////////////////////////
 
-// HYPR: rounding = 18 + opacity 0.9 global
+// Arrondi et transparence appliqués à toutes les fenêtres.
 window-rule {
     geometry-corner-radius 18
     clip-to-geometry true
     opacity 0.9
 }
 
-// Les fenêtres de jeu restent opaques (l'opacité globale gêne en jeu)
+// Les fenêtres de jeu restent opaques (l'opacité globale gêne en jeu).
 window-rule {
     match app-id=r#"^steam_app"#
     opacity 1.0
 }
 
-// HYPR: windowrule float on pour les utilitaires
+// Utilitaires de configuration : ouverts flottants, à 45 % de large.
 window-rule {
     match app-id=r#"^(pavucontrol|org\.pulseaudio\.pavucontrol)$"#
     match app-id=r#"^nm-connection-editor$"#
@@ -233,14 +229,14 @@ window-rule {
     default-column-width { proportion 0.45; }
 }
 
-// HYPR: Picture-in-Picture flottant, épinglé, en bas à droite
+// Picture-in-Picture : flottant, ancré en bas à droite.
 window-rule {
     match title=r#"[Pp]icture[-\s]?[Ii]n[-\s]?[Pp]icture"#
     open-floating true
     default-floating-position x=32 y=32 relative-to="bottom-right"
 }
 
-// HYPR: dialogues Open File / Save As / File Upload flottants et centrés
+// Dialogues de fichiers : flottants plutôt que tuilés.
 window-rule {
     match title=r#"^(Open File|Select a File|Open Folder|Save As|File Upload|Choose wallpaper|Library)"#
     match title=r#"wants to (save|open)$"#
@@ -252,184 +248,166 @@ window-rule {
 //////////////////////////////////////////////////////////////////////
 
 binds {
-    //------------------------------------------------------------------
-    // Shell Noctalia — identiques à Hyprland, seul « qs -c » disparaît
-    //------------------------------------------------------------------
-    Mod+D           { spawn "noctalia-shell" "ipc" "call" "launcher" "toggle"; }
-    Mod+A           { spawn "noctalia-shell" "ipc" "call" "controlCenter" "toggle"; }
-    Mod+I           { spawn "noctalia-shell" "ipc" "call" "settings" "toggle"; }
-    Mod+L           { spawn "noctalia-shell" "ipc" "call" "lockScreen" "lock"; }  // lockScreen n'a pas de toggle()
-    // "plugin:clipper" n'est pas une cible IPC valide (vérifié via
-    // `noctalia-shell ipc show` : les cibles réelles sont listées là, pas de
-    // "clipper"). La bonne cible pour l'historique clipboard est
-    // `launcher clipboard`, qui ouvre le Launcher sur l'onglet Clipboard.
-    Mod+V           { spawn "noctalia-shell" "ipc" "call" "launcher" "clipboard"; }
-    Mod+Shift+V     { spawn "noctalia-shell" "ipc" "call" "launcher" "clipboard"; }  // HYPR: ancien raccourci historique clipboard
-    // launcher n'a pas de fonction calculator() : le calcul se fait en tapant
-    // directement une expression dans le launcher général.
-    Mod+Period      { spawn "noctalia-shell" "ipc" "call" "launcher" "toggle"; }
-    Mod+Slash       { spawn "noctalia-shell" "ipc" "call" "notifications" "toggleHistory"; }
-    Mod+Alt+Slash   { spawn "noctalia-shell" "ipc" "call" "notifications" "toggleDND"; }
-    Mod+Alt+D       { spawn "noctalia-shell" "ipc" "call" "darkMode" "toggle"; }
-    Ctrl+Mod+T      { spawn "noctalia-shell" "ipc" "call" "wallpaper" "random"; }
-    Mod+Shift+E     { spawn "noctalia-shell" "ipc" "call" "sessionMenu" "toggle"; }
-    Ctrl+Alt+Delete { spawn "noctalia-shell" "ipc" "call" "sessionMenu" "toggle"; }  // powerPanel n'existe pas ; sessionMenu est l'équivalent
+    //"Shell Noctalia"
+    Mod+D           hotkey-overlay-title="Lanceur d'applications" { spawn "noctalia-shell" "ipc" "call" "launcher" "toggle"; }
+    Mod+A           hotkey-overlay-title="Centre de contrôle" { spawn "noctalia-shell" "ipc" "call" "controlCenter" "toggle"; }
+    Mod+I           hotkey-overlay-title="Réglages de Noctalia" { spawn "noctalia-shell" "ipc" "call" "settings" "toggle"; }
+    // lockScreen n'expose pas de toggle(), seulement lock().
+    Mod+L           hotkey-overlay-title="Verrouiller l'écran" { spawn "noctalia-shell" "ipc" "call" "lockScreen" "lock"; }
+    // La cible IPC de l'historique du presse-papiers est launcher clipboard,
+    // qui ouvre le Launcher sur son onglet Clipboard. Il n'existe pas de
+    // cible clipper : la liste réelle des cibles est donnée par
+    // `noctalia-shell ipc show`.
+    Mod+V           hotkey-overlay-title="Historique du presse-papiers" { spawn "noctalia-shell" "ipc" "call" "launcher" "clipboard"; }
+    Mod+Shift+V     hotkey-overlay-title="Historique du presse-papiers" { spawn "noctalia-shell" "ipc" "call" "launcher" "clipboard"; }
+    // Le launcher n'a pas de fonction calculator() : on tape directement
+    // l'expression dans le launcher général, qui l'évalue.
+    Mod+Period      hotkey-overlay-title="Lanceur — calcul et emoji" { spawn "noctalia-shell" "ipc" "call" "launcher" "toggle"; }
+    Mod+Slash       hotkey-overlay-title="Historique des notifications" { spawn "noctalia-shell" "ipc" "call" "notifications" "toggleHistory"; }
+    Mod+Alt+Slash   hotkey-overlay-title="Mode Ne pas déranger" { spawn "noctalia-shell" "ipc" "call" "notifications" "toggleDND"; }
+    Mod+Alt+D       hotkey-overlay-title="Thème clair ou sombre" { spawn "noctalia-shell" "ipc" "call" "darkMode" "toggle"; }
+    Ctrl+Mod+T      hotkey-overlay-title="Fond d'écran aléatoire" { spawn "noctalia-shell" "ipc" "call" "wallpaper" "random"; }
+    // powerPanel n'existe pas côté Noctalia ; sessionMenu en tient lieu.
+    Mod+Shift+E     hotkey-overlay-title="Menu de session" { spawn "noctalia-shell" "ipc" "call" "sessionMenu" "toggle"; }
+    Ctrl+Alt+Delete hotkey-overlay-title="Menu de session" { spawn "noctalia-shell" "ipc" "call" "sessionMenu" "toggle"; }
 
-    // Aide-mémoire des raccourcis, natif dans niri. C'est le bind par
-    // défaut du compositeur, celui qui te manquait.
-    Mod+Shift+Slash { show-hotkey-overlay; }
+    // Aide-mémoire des raccourcis : le plugin Noctalia relit CE fichier et
+    // affiche les hotkey-overlay-title, catégorie par catégorie. Il remplace
+    // l'action native show-hotkey-overlay.
+    Mod+Shift+Slash hotkey-overlay-title="Aide-mémoire des raccourcis" { spawn "noctalia-shell" "ipc" "call" "plugin:keybind-cheatsheet" "toggle"; }
 
-    //------------------------------------------------------------------
-    // Luminosité / volume — allow-when-locked pour agir écran verrouillé
-    //------------------------------------------------------------------
-    XF86MonBrightnessUp   allow-when-locked=true { spawn "noctalia-shell" "ipc" "call" "brightness" "increase"; }
-    XF86MonBrightnessDown allow-when-locked=true { spawn "noctalia-shell" "ipc" "call" "brightness" "decrease"; }
-    XF86AudioRaiseVolume  allow-when-locked=true { spawn "noctalia-shell" "ipc" "call" "volume" "increase"; }
-    XF86AudioLowerVolume  allow-when-locked=true { spawn "noctalia-shell" "ipc" "call" "volume" "decrease"; }
-    XF86AudioMute         allow-when-locked=true { spawn "noctalia-shell" "ipc" "call" "volume" "muteOutput"; }
-    XF86AudioMicMute      allow-when-locked=true { spawn "noctalia-shell" "ipc" "call" "volume" "muteInput"; }
+    //"Luminosité et volume"
+    // allow-when-locked : ces touches restent actives écran verrouillé.
+    XF86MonBrightnessUp   allow-when-locked=true hotkey-overlay-title="Augmenter la luminosité" { spawn "noctalia-shell" "ipc" "call" "brightness" "increase"; }
+    XF86MonBrightnessDown allow-when-locked=true hotkey-overlay-title="Diminuer la luminosité" { spawn "noctalia-shell" "ipc" "call" "brightness" "decrease"; }
+    XF86AudioRaiseVolume  allow-when-locked=true hotkey-overlay-title="Augmenter le volume" { spawn "noctalia-shell" "ipc" "call" "volume" "increase"; }
+    XF86AudioLowerVolume  allow-when-locked=true hotkey-overlay-title="Diminuer le volume" { spawn "noctalia-shell" "ipc" "call" "volume" "decrease"; }
+    XF86AudioMute         allow-when-locked=true hotkey-overlay-title="Couper le son" { spawn "noctalia-shell" "ipc" "call" "volume" "muteOutput"; }
+    XF86AudioMicMute      allow-when-locked=true hotkey-overlay-title="Couper le micro" { spawn "noctalia-shell" "ipc" "call" "volume" "muteInput"; }
 
-    //------------------------------------------------------------------
-    // Captures — natives dans niri, grim/slurp ne sont plus nécessaires
-    //------------------------------------------------------------------
-    Mod+Shift+S { screenshot; }               // HYPR: région → presse-papiers
-    Print       { screenshot-screen; }        // HYPR: plein écran → presse-papiers
-    Ctrl+Print  { screenshot-window; }
+    //"Captures et enregistrement"
+    Mod+Shift+S hotkey-overlay-title="Capturer une région" { screenshot; }
+    Print       hotkey-overlay-title="Capturer l'écran entier" { screenshot-screen; }
+    Ctrl+Print  hotkey-overlay-title="Capturer la fenêtre active" { screenshot-window; }
 
-    // OCR et pipette : pas d'équivalent natif, on garde tes outils
-    Mod+Shift+T { spawn "sh" "-c" "grim -g \"$(slurp)\" /tmp/ocr.png && tesseract /tmp/ocr.png - | wl-copy && rm /tmp/ocr.png"; }
-    Mod+Shift+C { spawn "hyprpicker" "-a"; }
+    // OCR et pipette : pas d'équivalent natif dans niri, on garde les outils.
+    Mod+Shift+T hotkey-overlay-title="Texte d'une région vers le presse-papiers (OCR)" { spawn "sh" "-c" "grim -g \"$(slurp)\" /tmp/ocr.png && tesseract /tmp/ocr.png - | wl-copy && rm /tmp/ocr.png"; }
+    Mod+Shift+C hotkey-overlay-title="Pipette de couleur" { spawn "hyprpicker" "-a"; }
 
-    // Enregistrement — le script utilise wf-recorder, qui fonctionne sur
-    // niri. Il faudra remplacer l'appel `hyprctl monitors` qu'il contient.
-    Mod+Alt+R       { spawn "sh" "-c" "~/.config/niri/scripts/record.sh"; }
-    Mod+Shift+Alt+R { spawn "sh" "-c" "~/.config/niri/scripts/record.sh --fullscreen-sound"; }
+    // Le script s'appuie sur wf-recorder, compatible niri. L'appel
+    // `hyprctl monitors` qu'il contient reste à remplacer.
+    Mod+Alt+R       hotkey-overlay-title="Enregistrer l'écran" { spawn "sh" "-c" "~/.config/niri/scripts/record.sh"; }
+    Mod+Shift+Alt+R hotkey-overlay-title="Enregistrer l'écran avec le son" { spawn "sh" "-c" "~/.config/niri/scripts/record.sh --fullscreen-sound"; }
 
-    //------------------------------------------------------------------
-    // Fenêtres
-    //------------------------------------------------------------------
-    Mod+Q     { close-window; }               // HYPR: Super+Q killactive
-    Alt+F4    { close-window; }
+    //"Fenêtres"
+    Mod+Q     hotkey-overlay-title="Fermer la fenêtre" { close-window; }
+    Alt+F4    hotkey-overlay-title="Fermer la fenêtre" { close-window; }
 
-    Mod+Alt+Space { toggle-window-floating; } // HYPR: togglefloating
-    Mod+F         { maximize-column; }        // HYPR: fullscreen,1
-    Mod+Alt+F     { fullscreen-window; }      // HYPR: fullscreen,0
+    Mod+Alt+Space hotkey-overlay-title="Basculer entre flottant et tuilé" { toggle-window-floating; }
+    Mod+Alt+F     hotkey-overlay-title="Plein écran" { fullscreen-window; }
 
-    // HYPR: fullscreen,0 + windowrule opacity 1.0 override,fullscreen:1 —
-    // niri n'a pas de match "is-fullscreen" en window-rule (donc pas moyen
-    // de forcer l'opacité automatiquement pour toute fenêtre fullscreen),
-    // on chaîne donc les deux actions à la main. toggle-window-rule-opacity
-    // bascule entre l'opacité déclarée (0.9) et 1.0, donc rappuyer sur ce
-    // raccourci en sortant du fullscreen restaure aussi la transparence.
-    Mod+Shift+F   { spawn "sh" "-c" "niri msg action fullscreen-window && niri msg action toggle-window-rule-opacity"; }
+    // Agrandir une fenêtre, c'est se concentrer dessus : elle passe donc
+    // opaque en même temps. niri n'a pas de match is-maximized ni
+    // is-fullscreen en window-rule, la règle d'opacité ne peut pas suivre
+    // toute seule — on enchaîne les deux actions à la main.
+    //
+    // À savoir : toggle-window-rule-opacity pose un verrou PERSISTANT sur la
+    // fenêtre. Il ne se réarme ni en quittant le maximise, ni en quittant le
+    // plein écran, seulement à la fermeture de la fenêtre. Les deux bascules
+    // ne restent donc synchronisées que si tu ressors par le raccourci qui
+    // t'a fait entrer. Si une fenêtre reste opaque sans raison, Mod+O la
+    // remet d'aplomb.
+    Mod+F         hotkey-overlay-title="Maximiser la colonne, en opaque" { spawn "sh" "-c" "niri msg action maximize-column && niri msg action toggle-window-rule-opacity"; }
+    Mod+Shift+F   hotkey-overlay-title="Plein écran, en opaque" { spawn "sh" "-c" "niri msg action fullscreen-window && niri msg action toggle-window-rule-opacity"; }
+    Mod+O         hotkey-overlay-title="Transparence de la fenêtre" { toggle-window-rule-opacity; }
 
-    // HYPR: Super+P (pin) — pas d'équivalent niri. Le plus proche est de
-    // rendre la fenêtre flottante, qui reste alors au-dessus des tuiles.
+    // Épingler une fenêtre n'existe pas dans niri. Le plus proche est de la
+    // rendre flottante (Mod+Alt+Space) : elle reste alors au-dessus des tuiles.
 
-    //------------------------------------------------------------------
-    // Focus et déplacement
-    //------------------------------------------------------------------
-    // Dans Hyprland, Super+Left/Right changeait de workspace (ton bind
-    // « workspace e-1 » écrasait « movefocus »). Dans niri, le même geste
-    // fait défiler les colonnes : c'est l'équivalent naturel.
-    Mod+Left  { focus-column-left; }
-    Mod+Right { focus-column-right; }
-    Mod+Up    { focus-window-up; }
-    Mod+Down  { focus-window-down; }
+    //"Focus et déplacement"
+    Mod+Left  hotkey-overlay-title="Colonne précédente" { focus-column-left; }
+    Mod+Right hotkey-overlay-title="Colonne suivante" { focus-column-right; }
+    Mod+Up    hotkey-overlay-title="Fenêtre du dessus" { focus-window-up; }
+    Mod+Down  hotkey-overlay-title="Fenêtre du dessous" { focus-window-down; }
 
-    Mod+Shift+Left  { move-column-left; }
-    Mod+Shift+Right { move-column-right; }
-    Mod+Shift+Up    { move-window-up; }
-    Mod+Shift+Down  { move-window-down; }
+    Mod+Shift+Left  hotkey-overlay-title="Déplacer la colonne à gauche" { move-column-left; }
+    Mod+Shift+Right hotkey-overlay-title="Déplacer la colonne à droite" { move-column-right; }
+    Mod+Shift+Up    hotkey-overlay-title="Déplacer la fenêtre vers le haut" { move-window-up; }
+    Mod+Shift+Down  hotkey-overlay-title="Déplacer la fenêtre vers le bas" { move-window-down; }
 
-    Mod+Home { focus-column-first; }
-    Mod+End  { focus-column-last; }
+    Mod+Home hotkey-overlay-title="Première colonne" { focus-column-first; }
+    Mod+End  hotkey-overlay-title="Dernière colonne" { focus-column-last; }
 
     // *-next plutôt que *-right : avec plus de deux écrans, -right ne fait
     // rien s'il n'y a pas de moniteur physiquement à droite, alors que -next
     // cycle dans l'ordre des écrans (et boucle sur le premier à la fin).
-    Mod+P       { focus-monitor-next; }
-    Mod+Shift+P { move-window-to-monitor-next; }
+    Mod+P       hotkey-overlay-title="Écran suivant" { focus-monitor-next; }
+    Mod+Shift+P hotkey-overlay-title="Envoyer la fenêtre sur l'écran suivant" { move-window-to-monitor-next; }
 
-    // HYPR: splitratio -0.1 / +0.1
-    Mod+Semicolon  { set-column-width "-10%"; }
-    Mod+Apostrophe { set-column-width "+10%"; }
-    Mod+R          { switch-preset-column-width; }
-    Mod+Shift+R    { reset-window-height; }
-    Mod+Comma      { consume-or-expel-window-left; }
-    Mod+Backslash  { consume-or-expel-window-right; }
+    Mod+Semicolon  hotkey-overlay-title="Rétrécir la colonne de 10 %" { set-column-width "-10%"; }
+    Mod+Apostrophe hotkey-overlay-title="Élargir la colonne de 10 %" { set-column-width "+10%"; }
+    Mod+R          hotkey-overlay-title="Largeur de colonne suivante" { switch-preset-column-width; }
+    Mod+Shift+R    hotkey-overlay-title="Réinitialiser la hauteur" { reset-window-height; }
+    Mod+Comma      hotkey-overlay-title="Absorber ou expulser la fenêtre à gauche" { consume-or-expel-window-left; }
+    Mod+Backslash  hotkey-overlay-title="Absorber ou expulser la fenêtre à droite" { consume-or-expel-window-right; }
 
-    //------------------------------------------------------------------
-    // Workspaces — verticaux dans niri, horizontaux dans Hyprland
-    //------------------------------------------------------------------
-    Mod+1 { focus-workspace 1; }
-    Mod+2 { focus-workspace 2; }
-    Mod+3 { focus-workspace 3; }
-    Mod+4 { focus-workspace 4; }
-    Mod+5 { focus-workspace 5; }
-    Mod+6 { focus-workspace 6; }
-    Mod+7 { focus-workspace 7; }
-    Mod+8 { focus-workspace 8; }
-    Mod+9 { focus-workspace 9; }
-    Mod+0 { focus-workspace 10; }
+    //"Bureaux"
+    // Les bureaux sont empilés verticalement dans niri.
+    Mod+1 hotkey-overlay-title="Aller au bureau 1" { focus-workspace 1; }
+    Mod+2 hotkey-overlay-title="Aller au bureau 2" { focus-workspace 2; }
+    Mod+3 hotkey-overlay-title="Aller au bureau 3" { focus-workspace 3; }
+    Mod+4 hotkey-overlay-title="Aller au bureau 4" { focus-workspace 4; }
+    Mod+5 hotkey-overlay-title="Aller au bureau 5" { focus-workspace 5; }
+    Mod+6 hotkey-overlay-title="Aller au bureau 6" { focus-workspace 6; }
+    Mod+7 hotkey-overlay-title="Aller au bureau 7" { focus-workspace 7; }
+    Mod+8 hotkey-overlay-title="Aller au bureau 8" { focus-workspace 8; }
+    Mod+9 hotkey-overlay-title="Aller au bureau 9" { focus-workspace 9; }
+    Mod+0 hotkey-overlay-title="Aller au bureau 10" { focus-workspace 10; }
 
-    Mod+Shift+1 { move-column-to-workspace 1; }
-    Mod+Shift+2 { move-column-to-workspace 2; }
-    Mod+Shift+3 { move-column-to-workspace 3; }
-    Mod+Shift+4 { move-column-to-workspace 4; }
-    Mod+Shift+5 { move-column-to-workspace 5; }
-    Mod+Shift+6 { move-column-to-workspace 6; }
-    Mod+Shift+7 { move-column-to-workspace 7; }
-    Mod+Shift+8 { move-column-to-workspace 8; }
-    Mod+Shift+9 { move-column-to-workspace 9; }
-    Mod+Shift+0 { move-column-to-workspace 10; }
+    Mod+Shift+1 hotkey-overlay-title="Envoyer la colonne au bureau 1" { move-column-to-workspace 1; }
+    Mod+Shift+2 hotkey-overlay-title="Envoyer la colonne au bureau 2" { move-column-to-workspace 2; }
+    Mod+Shift+3 hotkey-overlay-title="Envoyer la colonne au bureau 3" { move-column-to-workspace 3; }
+    Mod+Shift+4 hotkey-overlay-title="Envoyer la colonne au bureau 4" { move-column-to-workspace 4; }
+    Mod+Shift+5 hotkey-overlay-title="Envoyer la colonne au bureau 5" { move-column-to-workspace 5; }
+    Mod+Shift+6 hotkey-overlay-title="Envoyer la colonne au bureau 6" { move-column-to-workspace 6; }
+    Mod+Shift+7 hotkey-overlay-title="Envoyer la colonne au bureau 7" { move-column-to-workspace 7; }
+    Mod+Shift+8 hotkey-overlay-title="Envoyer la colonne au bureau 8" { move-column-to-workspace 8; }
+    Mod+Shift+9 hotkey-overlay-title="Envoyer la colonne au bureau 9" { move-column-to-workspace 9; }
+    Mod+Shift+0 hotkey-overlay-title="Envoyer la colonne au bureau 10" { move-column-to-workspace 10; }
 
-    Mod+Page_Down { focus-workspace-down; }
-    Mod+Page_Up   { focus-workspace-up; }
+    Mod+Page_Down hotkey-overlay-title="Bureau suivant" { focus-workspace-down; }
+    Mod+Page_Up   hotkey-overlay-title="Bureau précédent" { focus-workspace-up; }
 
-    // Déplacer la fenêtre courante d'un workspace à l'autre, en relatif.
-    // Les workspaces niri étant empilés verticalement, haut/bas est le
-    // geste naturel — l'équivalent du movetoworkspace relatif d'Hyprland.
-    Mod+Ctrl+Up   { move-column-to-workspace-up; }
-    Mod+Ctrl+Down { move-column-to-workspace-down; }
+    Mod+Ctrl+Up   hotkey-overlay-title="Envoyer la colonne au bureau du dessus" { move-column-to-workspace-up; }
+    Mod+Ctrl+Down hotkey-overlay-title="Envoyer la colonne au bureau du dessous" { move-column-to-workspace-down; }
 
     // Variante ne déplaçant que la fenêtre focalisée, si la colonne en
     // contient plusieurs :
     // Mod+Ctrl+Shift+Up   { move-window-to-workspace-up; }
     // Mod+Ctrl+Shift+Down { move-window-to-workspace-down; }
 
-    // HYPR: Super+S / Super+Alt+S — le « bureau par-dessus tout »
-    Mod+S     { focus-workspace "scratch"; }
-    Mod+Alt+S { move-column-to-workspace "scratch"; }
+    Mod+S     hotkey-overlay-title="Aller au bureau scratch" { focus-workspace "scratch"; }
+    Mod+Alt+S hotkey-overlay-title="Envoyer la colonne au bureau scratch" { move-column-to-workspace "scratch"; }
 
-    // HYPR: hyprexpo (Super+S scratchpad n'a pas d'équivalent, mais
-    // l'overview intégré remplace avantageusement le plugin)
-    Mod+Tab { toggle-overview; }
-    Alt+Tab { focus-window-previous; }
+    Mod+Tab hotkey-overlay-title="Vue d'ensemble" { toggle-overview; }
+    Alt+Tab hotkey-overlay-title="Fenêtre précédente" { focus-window-previous; }
 
-    //------------------------------------------------------------------
-    // Applications — tes scripts launch_first_available deviennent inutiles,
-    // les paquets sont garantis présents par Nix.
-    //------------------------------------------------------------------
-    Mod+Return  { spawn "alacritty"; }
-    Mod+W       { spawn "zen-beta"; }                    // à ajuster selon mainProgram
-    Mod+C       { spawn "code"; }
-    Mod+E       { spawn "nautilus"; }
-    Mod+Shift+W { spawn "onlyoffice-desktopeditors"; }
-    Ctrl+Mod+V  { spawn "pavucontrol"; }
-    Ctrl+Shift+Escape { spawn "alacritty" "-e" "btop"; }
+    //"Applications"
+    Mod+Return  hotkey-overlay-title="Terminal (Alacritty)" { spawn "alacritty"; }
+    Mod+W       hotkey-overlay-title="Navigateur (Zen)" { spawn "zen-beta"; }
+    Mod+C       hotkey-overlay-title="Éditeur de code (VS Code)" { spawn "code"; }
+    Mod+E       hotkey-overlay-title="Explorateur de fichiers (Nautilus)" { spawn "nautilus"; }
+    Mod+Shift+W hotkey-overlay-title="Suite bureautique (OnlyOffice)" { spawn "onlyoffice-desktopeditors"; }
+    Ctrl+Mod+V  hotkey-overlay-title="Mixeur audio (pavucontrol)" { spawn "pavucontrol"; }
+    Ctrl+Shift+Escape hotkey-overlay-title="Moniteur système (btop)" { spawn "alacritty" "-e" "btop"; }
 
-    //------------------------------------------------------------------
-    // Session
-    //------------------------------------------------------------------
-    Mod+Shift+L { spawn "systemctl" "suspend"; }
-    Ctrl+Shift+Alt+Mod+Delete { spawn "systemctl" "poweroff"; }
-    Mod+Shift+Q { quit; }
+    //"Session"
+    Mod+Shift+L hotkey-overlay-title="Mettre en veille" { spawn "systemctl" "suspend"; }
+    Ctrl+Shift+Alt+Mod+Delete hotkey-overlay-title="Éteindre l'ordinateur" { spawn "systemctl" "poweroff"; }
+    Mod+Shift+Q hotkey-overlay-title="Quitter niri" { quit; }
 
-    // HYPR: Ctrl+Super+R redémarrait le shell
-    Ctrl+Mod+R { spawn "sh" "-c" "pkill noctalia-shell; sleep 0.2; noctalia-shell & disown"; }
+    Ctrl+Mod+R hotkey-overlay-title="Redémarrer le shell Noctalia" { spawn "sh" "-c" "pkill noctalia-shell; sleep 0.2; noctalia-shell & disown"; }
 
-    // Molette : défilement entre colonnes
-    Mod+WheelScrollDown cooldown-ms=150 { focus-column-right; }
-    Mod+WheelScrollUp   cooldown-ms=150 { focus-column-left; }
+    Mod+WheelScrollDown cooldown-ms=150 hotkey-overlay-title="Colonne suivante (molette)" { focus-column-right; }
+    Mod+WheelScrollUp   cooldown-ms=150 hotkey-overlay-title="Colonne précédente (molette)" { focus-column-left; }
 }

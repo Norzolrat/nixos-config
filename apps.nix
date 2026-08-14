@@ -25,6 +25,7 @@ in
     bitwarden-desktop
     bitwarden-cli
     git
+    fastfetch
   ];
 
   # Spotify est unfree ; allowUnfree est déjà posé dans matebook-gt.nix.
