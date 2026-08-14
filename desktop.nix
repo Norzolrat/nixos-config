@@ -314,6 +314,53 @@ in
           directory = "${config.home.homeDirectory}/Pictures/Wallpapers";
           fill_mode = "crop";
         };
+
+        # Barre reprise de l'ancien settings.json de la v4. La v5 nomme les
+        # sections start/center/end au lieu de left/center/right, et les
+        # widgets en minuscules : Workspace → workspaces, SystemMonitor →
+        # sysmon, NotificationHistory → notifications, ActiveWindow →
+        # active_window (le seul avec un tiret bas, les autres sont en tirets).
+        # Les identifiants sont ceux de la fabrique de widgets du binaire v5,
+        # pas une transposition à vue.
+        #
+        # privacy était un plugin en v4 (plugin:privacy-indicator) ; c'est un
+        # widget intégré en v5, donc plus rien à installer pour l'avoir.
+        # Les trois autres widgets de plugins (calculator, mini-docker,
+        # keybind-cheatsheet) sont à réinsérer ici une fois les plugins
+        # réinstallés, sous l'identifiant que donne `noctalia msg plugins list`.
+        bar.main = {
+          position = "top";
+          start = [ "sysmon" "active_window" ];
+          center = [ "workspaces" "privacy" ];
+          end = [
+            "tray"
+            "bluetooth"
+            "network"
+            "notifications"
+            "battery"
+            "volume"
+            "brightness"
+            "clock"
+          ];
+        };
+
+        nightlight.enabled = true;
+
+        # Délais repris tels quels de la v4 : écran éteint à 10 min,
+        # verrouillage à 11 min, veille à 30 min. C'est Noctalia qui s'en
+        # charge, il n'y a donc toujours pas de swayidle à installer.
+        idle.behavior = {
+          "screen-off" = {
+            enabled = true;
+            timeout = 600;
+            action = "screen_off";
+          };
+          lock = {
+            enabled = true;
+            timeout = 660;
+            action = "lock";
+          };
+        };
       };
     };
 
