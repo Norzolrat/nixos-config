@@ -15,12 +15,17 @@ in
     # On passe par l'input plutôt que par pkgs.niri-stable : l'overlay du
     # flake n'est pas garanti d'être appliqué selon l'ordre de chargement.
     #
-    # niri-unstable et pas -stable : le pin `niri-stable` de niri-flake est
-    # resté sur 25.08 (août 2025), donc tout ce que la doc marque
-    # « Since: 25.11 » ou « Since: 26.04 » est inaccessible avec. Contrepartie :
-    # chaque `nix flake update` déplace le compositeur d'un cran de master.
-    # Le cache niri.cachix.org (cf. flake.nix) évite de recompiler.
-    package = inputs.niri.packages.${pkgs.stdenv.hostPlatform.system}.niri-unstable;
+    # Retour sur niri-stable (25.08). Le passage à niri-unstable avait été
+    # motivé par une question sur des « plugins » qui s'est finalement révélée
+    # porter sur Noctalia, pas sur niri : aucune fonctionnalité postérieure à
+    # 25.08 n'est utilisée ici. Stable évite qu'un `nix flake update` ne
+    # déplace le compositeur d'un cran de master à chaque fois.
+    #
+    # À noter : ce choix n'a RIEN à voir avec la panne de l'écran tactile.
+    # libinput ne reçoit aucun événement du contrôleur FTSC1000, donc le
+    # problème est sous le compositeur — voir les erreurs I2C
+    # « failed to get a report from device: -5 » au démarrage.
+    package = inputs.niri.packages.${pkgs.stdenv.hostPlatform.system}.niri-stable;
   };
 
   # niri ne fournit pas de portal : il faut gnome (screencast) + gtk (fichiers)
