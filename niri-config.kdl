@@ -207,10 +207,18 @@ environment {
 //////////////////////////////////////////////////////////////////////
 
 // Arrondi et transparence appliqués à toutes les fenêtres.
+//
+// draw-border-with-background false est indispensable ici : avec
+// prefer-no-csd, les fenêtres qui acceptent les décorations serveur voient
+// leur focus-ring peint comme un rectangle PLEIN derrière elles. Combiné à
+// opacity 0.9, l'active-color transparaissait au travers et la fenêtre
+// semblait perdre sa transparence dès qu'elle prenait le focus. À false, le
+// focus-ring redevient un simple contour.
 window-rule {
     geometry-corner-radius 18
     clip-to-geometry true
     opacity 0.9
+    draw-border-with-background false
 }
 
 // Les fenêtres de jeu restent opaques (l'opacité globale gêne en jeu).
@@ -315,11 +323,10 @@ binds {
     // fenêtre. Il ne se réarme ni en quittant le maximise, ni en quittant le
     // plein écran, seulement à la fermeture de la fenêtre. Les deux bascules
     // ne restent donc synchronisées que si tu ressors par le raccourci qui
-    // t'a fait entrer. Si une fenêtre reste opaque sans raison, Mod+O la
-    // remet d'aplomb.
+    // t'a fait entrer. Si une fenêtre reste opaque sans raison, réappuyer
+    // sur ce raccourci la remet d'aplomb.
     Mod+F         hotkey-overlay-title="Maximiser la colonne, en opaque" { spawn "sh" "-c" "niri msg action maximize-column && niri msg action toggle-window-rule-opacity"; }
     Mod+Shift+F   hotkey-overlay-title="Plein écran, en opaque" { spawn "sh" "-c" "niri msg action fullscreen-window && niri msg action toggle-window-rule-opacity"; }
-    Mod+O         hotkey-overlay-title="Transparence de la fenêtre" { toggle-window-rule-opacity; }
 
     // Épingler une fenêtre n'existe pas dans niri. Le plus proche est de la
     // rendre flottante (Mod+Alt+Space) : elle reste alors au-dessus des tuiles.
