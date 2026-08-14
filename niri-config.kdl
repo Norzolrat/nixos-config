@@ -279,17 +279,13 @@ binds {
     Mod+Shift+E     hotkey-overlay-title="Menu de session" { spawn "noctalia" "msg" "panel-toggle" "session"; }
     Ctrl+Alt+Delete hotkey-overlay-title="Menu de session" { spawn "noctalia" "msg" "panel-toggle" "session"; }
 
-    // Aide-mémoire des raccourcis : temporairement l'overlay natif de niri.
-    // La v5 a changé l'appel des plugins — ce n'est plus
-    // `ipc call plugin:<id> toggle` mais :
-    //     noctalia msg plugin <auteur/plugin:entrée> <cible> <événement>
-    // et l'identifiant exact ne se connaît qu'une fois keybind-cheatsheet
-    // réinstallé depuis la source community-plugins. Relève-le avec
-    // `noctalia msg plugins list`, puis remplace la ligne ci-dessous.
-    // Le plugin lit toujours CE fichier et affiche les hotkey-overlay-title,
-    // catégorie par catégorie : le travail fait sur les descriptions reste
-    // valable tel quel.
-    Mod+Shift+Slash hotkey-overlay-title="Aide-mémoire des raccourcis" { show-hotkey-overlay; }
+    // Aide-mémoire des raccourcis, fourni par le plugin kenn/keybind-cheatsheet.
+    // En v5 un plugin expose un panneau comme n'importe quel autre, adressé
+    // par <auteur>/<plugin>:<entrée> — l'identifiant se relève avec
+    // `noctalia msg plugins list`.
+    // Le plugin lit CE fichier et affiche les hotkey-overlay-title, catégorie
+    // par catégorie : c'est ce qui rend les descriptions ci-dessus utiles.
+    Mod+Shift+Slash hotkey-overlay-title="Aide-mémoire des raccourcis" { spawn "noctalia" "msg" "panel-toggle" "kenn/keybind-cheatsheet:cheatsheet"; }
 
     //"Luminosité et volume"
     // allow-when-locked : ces touches restent actives écran verrouillé.
