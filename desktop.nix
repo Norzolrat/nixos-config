@@ -36,13 +36,19 @@ in
     };
   };
 
-  # Greeter assorti au thème Noctalia. Le « Sync Now » (Settings → Security →
-  # Noctalia Greeter) documenté par Noctalia ne fonctionne qu'avec Noctalia
-  # v5 — on est sur legacy-v4, donc ce bouton ne fait rien chez nous. À la
-  # place : scheme "Synced" + palette manuelle (toujours prioritaire sur la
-  # sync de toute façon), recopiée depuis ~/.config/noctalia/colors.json —
-  # donc un instantané, PAS un lien live : si tu changes de fond d'écran ou
-  # de palette dans Noctalia, il faudra remettre ces valeurs à jour ici.
+  # Greeter assorti au thème Noctalia.
+  #
+  # Ce bloc ne déclare QUE ce qui doit rester figé. Tout ce qui touche à
+  # l'apparence — palette et fond d'écran — est volontairement absent, parce
+  # que le greeter fusionne deux fichiers et que le déclaratif l'emporte :
+  #   /var/lib/noctalia-greeter/greeter.toml  ← ce bloc, prioritaire
+  #   /var/lib/noctalia-greeter/sync.toml     ← écrit par la synchronisation
+  # Déclarer une palette ici la figerait donc pour toujours, et c'est
+  # exactement ce qui faisait dériver le greeter en v4 (couleurs d'un autre
+  # jour, fond d'écran pointant dans /home/normi que l'utilisateur `greeter`
+  # ne peut de toute façon pas lire, ce home étant en 0700).
+  #
+  # La synchronisation se déclenche avec :  noctalia msg greeter-sync
   #
   # Le module active services.greetd et accounts-daemon via mkDefault, donc
   # ne PAS définir services.greetd ici en dur, ça écraserait ces défauts.
@@ -55,33 +61,8 @@ in
         path = "${pkgs.bibata-cursors}/share/icons";
       };
       appearance = {
-        scheme = "Synced";
         theme_mode = "dark";
         font_family = "DejaVu Sans Mono";
-        palette = {
-          primary = "#e0c0ac";
-          on_primary = "#402c1e";
-          secondary = "#d4c3b9";
-          on_secondary = "#392e27";
-          tertiary = "#cac8aa";
-          on_tertiary = "#32311c";
-          error = "#ffb4ab";
-          on_error = "#690005";
-          surface = "#151311";
-          on_surface = "#e8e1de";
-          surface_variant = "#221f1d";
-          on_surface_variant = "#d2c4bb";
-          outline = "#4f453e";
-          shadow = "#000000";
-          hover = "#cac8aa";
-          on_hover = "#32311c";
-        };
-        wallpaper = {
-          # Fond réellement affiché sur l'écran interne (eDP-1), vérifié dans
-          # ~/.cache/noctalia/wallpapers.json — pas une supposition.
-          path = "${config.users.users.${username}.home}/Pictures/Wallpapers/default.jpg";
-          fill_mode = "crop";
-        };
       };
     };
   };
@@ -283,43 +264,6 @@ in
   home-manager.extraSpecialArgs = { inherit inputs; };
 
   home-manager.users.${username} = { config, lib, pkgs, ... }:
-    let
-      # Seed initial de ~/.config/noctalia/settings.json : Noctalia gère ce
-      # fichier lui-même à l'exécution (couleurs, layout, etc.). Si on le
-      # laissait sous home-manager (xdg.configFile), il serait re-symlinké
-      # vers le store — donc écrasé — à CHAQUE boot, puisque
-      # home-manager-<user>.service se relance à chaque démarrage, pas
-      # seulement à `nixos-rebuild switch`. On ne fournit donc ces valeurs
-      # que comme point de départ, copiées une seule fois (cf. activation
-      # script plus bas) si le fichier n'existe pas encore.
-      noctaliaSettingsSeed = pkgs.writeText "noctalia-settings-seed.json" (builtins.toJSON {
-        general = {
-          # Pas de capteur d'empreintes exploitable sur cette machine.
-          allowPasswordWithFprintd = false;
-          lockOnSuspend = true;
-        };
-        appLauncher.terminalCommand = "alacritty -e";
-        templates = {
-          enableUserTemplates = false;   # true seulement si tu ajoutes les tiens
-          activeTemplates = [
-            { id = "alacritty"; active = true; }
-            { id = "spotify"; active = true; }
-            { id = "discord"; active = true; }
-            { id = "vscode";  active = true; }
-            { id = "zen";     active = true; }
-            { id = "steam";   active = true; }
-            { id = "gtk";     active = true; }
-            { id = "qt";      active = true; }
-          ];
-        };
-        wallpaper = {
-          enabled = true;
-          directory = "${config.home.homeDirectory}/Pictures/Wallpapers";
-          fillMode = "crop";
-          setWallpaperOnAllMonitors = true;
-        };
-      });
-    in
     {
     home.stateVersion = "25.11";
 
@@ -327,14 +271,51 @@ in
       inputs.noctalia.homeModules.default
     ];
 
-    programs.noctalia-shell.enable = true;
+    ###########################################################################
+    # Noctalia v5
+    ###########################################################################
+    # La v5 lit ~/.config/noctalia/config.toml (TOML, rechargé à chaud via
+    # inotify), là où la v4 gérait un settings.json qu'elle réécrivait
+    # elle-même — d'où le seed recopié une seule fois qui existait ici avant.
+    # Ce n'est plus nécessaire : `settings` est rendu en TOML par le module,
+    # et validé au build (validateConfig, activé par défaut). Les réglages
+    # posés ici restent modifiables à l'exécution depuis le menu Settings.
+    programs.noctalia = {
+      enable = true;
 
-    home.activation.noctaliaSettingsSeed = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      target="${config.home.homeDirectory}/.config/noctalia/settings.json"
-      if [ ! -e "$target" ]; then
-        install -Dm644 ${noctaliaSettingsSeed} "$target"
-      fi
-    '';
+      # Service utilisateur systemd plutôt qu'un spawn-at-startup dans niri :
+      # le shell est ainsi relancé proprement et journalisé (journalctl
+      # --user -u noctalia).
+      systemd.enable = true;
+
+      settings = {
+        theme = {
+          mode = "dark";
+          # La palette est dérivée du fond d'écran : c'est l'équivalent v5 du
+          # scheme « Synced » de la v4, et c'est ce que `greeter-sync` recopie
+          # ensuite vers l'écran de connexion.
+          source = "wallpaper";
+
+          templates = {
+            enable_builtin_templates = true;
+            # Identifiants réels, relevés avec `noctalia theme --list-templates`.
+            # La v4 parlait d'un template « gtk » unique, la v5 sépare gtk3 et
+            # gtk4. Les templates spotify, discord, vscode, zen et steam ne
+            # sont pas fournis d'origine : ils viennent du dépôt communautaire,
+            # à ajouter dans community_ids une fois leurs identifiants relevés
+            # avec `noctalia theme --list-templates` après un premier lancement.
+            builtin_ids = [ "gtk3" "gtk4" "qt" "alacritty" "btop" ];
+            enable_community_templates = true;
+          };
+        };
+
+        wallpaper = {
+          enabled = true;
+          directory = "${config.home.homeDirectory}/Pictures/Wallpapers";
+          fill_mode = "crop";
+        };
+      };
+    };
 
     ###########################################################################
     # fish

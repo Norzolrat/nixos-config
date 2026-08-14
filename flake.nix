@@ -25,10 +25,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Noctalia v4 (branche héritée Quickshell).
-    # Pour la v5 native : url = "github:noctalia-dev/noctalia";
+    # Noctalia v5 native (C++), et non plus la v4 en QML/Quickshell : c'est
+    # une réécriture, pas une montée de version. Elle apporte le
+    # `noctalia msg greeter-sync` qui synchronise fond d'écran et palette
+    # avec le greeter — impossible en v4.
+    # Pour revenir en arrière : url = "github:noctalia-dev/noctalia/legacy-v4";
     noctalia = {
-      url = "github:noctalia-dev/noctalia/legacy-v4";
+      url = "github:noctalia-dev/noctalia";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

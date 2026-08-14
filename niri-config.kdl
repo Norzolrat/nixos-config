@@ -124,8 +124,10 @@ layout {
 // Démarrage
 //////////////////////////////////////////////////////////////////////
 
-// Le shell : barre, panneaux, verrouillage, fond d'écran.
-spawn-at-startup "noctalia-shell"
+// Le shell (barre, panneaux, verrouillage, fond d'écran) n'est PAS lancé
+// ici : programs.noctalia.systemd.enable dans desktop.nix en fait un service
+// utilisateur, démarré avec graphical-session.target. Le lancer aussi depuis
+// niri donnerait deux instances.
 
 // niri n'a pas de scratchpad qui se superpose au workspace courant.
 // L'approximation la plus proche est un workspace nommé, atteignable d'une
@@ -139,15 +141,14 @@ spawn-at-startup "fcitx5"
 // Traitement audio en service, sans fenêtre.
 spawn-at-startup "easyeffects" "--gapplication-service"
 
-// Les surveillants de presse-papiers ne sont PAS relancés ici : ton
-// settings.json Noctalia les démarre déjà via clipboardWatchTextCommand
-// et clipboardWatchImageCommand. Les dupliquer créerait des doublons
-// dans l'historique.
+// Aucun surveillant de presse-papiers ici : la v5 gère l'historique
+// elle-même (clipboard_enabled dans config.toml). En lancer un en parallèle
+// créerait des doublons.
 
 // La gestion de l'inactivité passe par swayidle (voir desktop.nix).
 
 // Verrouiller dès l'ouverture de session, si tu le souhaites un jour :
-// spawn-at-startup "noctalia-shell" "ipc" "call" "lockScreen" "lock"
+// spawn-at-startup "noctalia" "msg" "lock"
 
 //////////////////////////////////////////////////////////////////////
 // Divers
@@ -257,41 +258,47 @@ window-rule {
 
 binds {
     //"Shell Noctalia"
-    Mod+D           hotkey-overlay-title="Lanceur d'applications" { spawn "noctalia-shell" "ipc" "call" "launcher" "toggle"; }
-    Mod+A           hotkey-overlay-title="Centre de contrôle" { spawn "noctalia-shell" "ipc" "call" "controlCenter" "toggle"; }
-    Mod+I           hotkey-overlay-title="Réglages de Noctalia" { spawn "noctalia-shell" "ipc" "call" "settings" "toggle"; }
-    // lockScreen n'expose pas de toggle(), seulement lock().
-    Mod+L           hotkey-overlay-title="Verrouiller l'écran" { spawn "noctalia-shell" "ipc" "call" "lockScreen" "lock"; }
-    // La cible IPC de l'historique du presse-papiers est launcher clipboard,
-    // qui ouvre le Launcher sur son onglet Clipboard. Il n'existe pas de
-    // cible clipper : la liste réelle des cibles est donnée par
-    // `noctalia-shell ipc show`.
-    Mod+V           hotkey-overlay-title="Historique du presse-papiers" { spawn "noctalia-shell" "ipc" "call" "launcher" "clipboard"; }
-    Mod+Shift+V     hotkey-overlay-title="Historique du presse-papiers" { spawn "noctalia-shell" "ipc" "call" "launcher" "clipboard"; }
-    // Le launcher n'a pas de fonction calculator() : on tape directement
-    // l'expression dans le launcher général, qui l'évalue.
-    Mod+Period      hotkey-overlay-title="Lanceur — calcul et emoji" { spawn "noctalia-shell" "ipc" "call" "launcher" "toggle"; }
-    Mod+Slash       hotkey-overlay-title="Historique des notifications" { spawn "noctalia-shell" "ipc" "call" "notifications" "toggleHistory"; }
-    Mod+Alt+Slash   hotkey-overlay-title="Mode Ne pas déranger" { spawn "noctalia-shell" "ipc" "call" "notifications" "toggleDND"; }
-    Mod+Alt+D       hotkey-overlay-title="Thème clair ou sombre" { spawn "noctalia-shell" "ipc" "call" "darkMode" "toggle"; }
-    Ctrl+Mod+T      hotkey-overlay-title="Fond d'écran aléatoire" { spawn "noctalia-shell" "ipc" "call" "wallpaper" "random"; }
-    // powerPanel n'existe pas côté Noctalia ; sessionMenu en tient lieu.
-    Mod+Shift+E     hotkey-overlay-title="Menu de session" { spawn "noctalia-shell" "ipc" "call" "sessionMenu" "toggle"; }
-    Ctrl+Alt+Delete hotkey-overlay-title="Menu de session" { spawn "noctalia-shell" "ipc" "call" "sessionMenu" "toggle"; }
+    Mod+D           hotkey-overlay-title="Lanceur d'applications" { spawn "noctalia" "msg" "panel-toggle" "launcher"; }
+    Mod+A           hotkey-overlay-title="Centre de contrôle" { spawn "noctalia" "msg" "panel-toggle" "control-center"; }
+    Mod+I           hotkey-overlay-title="Réglages de Noctalia" { spawn "noctalia" "msg" "settings-toggle"; }
+    Mod+L           hotkey-overlay-title="Verrouiller l'écran" { spawn "noctalia" "msg" "lock"; }
+    // Le presse-papiers a son propre panneau en v5, il ne passe plus par un
+    // onglet du lanceur. Les identifiants de panneaux valides sont launcher,
+    // control-center, notifications, clipboard et session ; la liste complète
+    // des commandes est donnée par `noctalia msg --help`.
+    Mod+V           hotkey-overlay-title="Historique du presse-papiers" { spawn "noctalia" "msg" "panel-toggle" "clipboard"; }
+    Mod+Shift+V     hotkey-overlay-title="Historique du presse-papiers" { spawn "noctalia" "msg" "panel-toggle" "clipboard"; }
+    // Le calcul et les emoji se tapent dans le lanceur, avec les préfixes de
+    // fournisseurs de la v5 (« /emo » par exemple).
+    Mod+Period      hotkey-overlay-title="Lanceur — calcul et emoji" { spawn "noctalia" "msg" "panel-toggle" "launcher"; }
+    Mod+Slash       hotkey-overlay-title="Historique des notifications" { spawn "noctalia" "msg" "panel-toggle" "notifications"; }
+    Mod+Alt+Slash   hotkey-overlay-title="Mode Ne pas déranger" { spawn "noctalia" "msg" "notification-dnd-toggle"; }
+    Mod+Alt+D       hotkey-overlay-title="Thème clair ou sombre" { spawn "noctalia" "msg" "theme-mode-toggle"; }
+    Ctrl+Mod+T      hotkey-overlay-title="Fond d'écran aléatoire" { spawn "noctalia" "msg" "wallpaper-random"; }
+    // Le menu de session est un panneau comme les autres en v5.
+    Mod+Shift+E     hotkey-overlay-title="Menu de session" { spawn "noctalia" "msg" "panel-toggle" "session"; }
+    Ctrl+Alt+Delete hotkey-overlay-title="Menu de session" { spawn "noctalia" "msg" "panel-toggle" "session"; }
 
-    // Aide-mémoire des raccourcis : le plugin Noctalia relit CE fichier et
-    // affiche les hotkey-overlay-title, catégorie par catégorie. Il remplace
-    // l'action native show-hotkey-overlay.
-    Mod+Shift+Slash hotkey-overlay-title="Aide-mémoire des raccourcis" { spawn "noctalia-shell" "ipc" "call" "plugin:keybind-cheatsheet" "toggle"; }
+    // Aide-mémoire des raccourcis : temporairement l'overlay natif de niri.
+    // La v5 a changé l'appel des plugins — ce n'est plus
+    // `ipc call plugin:<id> toggle` mais :
+    //     noctalia msg plugin <auteur/plugin:entrée> <cible> <événement>
+    // et l'identifiant exact ne se connaît qu'une fois keybind-cheatsheet
+    // réinstallé depuis la source community-plugins. Relève-le avec
+    // `noctalia msg plugins list`, puis remplace la ligne ci-dessous.
+    // Le plugin lit toujours CE fichier et affiche les hotkey-overlay-title,
+    // catégorie par catégorie : le travail fait sur les descriptions reste
+    // valable tel quel.
+    Mod+Shift+Slash hotkey-overlay-title="Aide-mémoire des raccourcis" { show-hotkey-overlay; }
 
     //"Luminosité et volume"
     // allow-when-locked : ces touches restent actives écran verrouillé.
-    XF86MonBrightnessUp   allow-when-locked=true hotkey-overlay-title="Augmenter la luminosité" { spawn "noctalia-shell" "ipc" "call" "brightness" "increase"; }
-    XF86MonBrightnessDown allow-when-locked=true hotkey-overlay-title="Diminuer la luminosité" { spawn "noctalia-shell" "ipc" "call" "brightness" "decrease"; }
-    XF86AudioRaiseVolume  allow-when-locked=true hotkey-overlay-title="Augmenter le volume" { spawn "noctalia-shell" "ipc" "call" "volume" "increase"; }
-    XF86AudioLowerVolume  allow-when-locked=true hotkey-overlay-title="Diminuer le volume" { spawn "noctalia-shell" "ipc" "call" "volume" "decrease"; }
-    XF86AudioMute         allow-when-locked=true hotkey-overlay-title="Couper le son" { spawn "noctalia-shell" "ipc" "call" "volume" "muteOutput"; }
-    XF86AudioMicMute      allow-when-locked=true hotkey-overlay-title="Couper le micro" { spawn "noctalia-shell" "ipc" "call" "volume" "muteInput"; }
+    XF86MonBrightnessUp   allow-when-locked=true hotkey-overlay-title="Augmenter la luminosité" { spawn "noctalia" "msg" "brightness-up"; }
+    XF86MonBrightnessDown allow-when-locked=true hotkey-overlay-title="Diminuer la luminosité" { spawn "noctalia" "msg" "brightness-down"; }
+    XF86AudioRaiseVolume  allow-when-locked=true hotkey-overlay-title="Augmenter le volume" { spawn "noctalia" "msg" "volume-up"; }
+    XF86AudioLowerVolume  allow-when-locked=true hotkey-overlay-title="Diminuer le volume" { spawn "noctalia" "msg" "volume-down"; }
+    XF86AudioMute         allow-when-locked=true hotkey-overlay-title="Couper le son" { spawn "noctalia" "msg" "volume-mute"; }
+    XF86AudioMicMute      allow-when-locked=true hotkey-overlay-title="Couper le micro" { spawn "noctalia" "msg" "mic-mute"; }
 
     //"Captures et enregistrement"
     Mod+Shift+S hotkey-overlay-title="Capturer une région" { screenshot; }
@@ -413,7 +420,9 @@ binds {
     Ctrl+Shift+Alt+Mod+Delete hotkey-overlay-title="Éteindre l'ordinateur" { spawn "systemctl" "poweroff"; }
     Mod+Shift+Q hotkey-overlay-title="Quitter niri" { quit; }
 
-    Ctrl+Mod+R hotkey-overlay-title="Redémarrer le shell Noctalia" { spawn "sh" "-c" "pkill noctalia-shell; sleep 0.2; noctalia-shell & disown"; }
+    // Le shell est un service utilisateur : systemctl le redémarre proprement,
+    // là où le pkill de la v4 laissait l'ancien processus mourir à l'aveugle.
+    Ctrl+Mod+R hotkey-overlay-title="Redémarrer le shell Noctalia" { spawn "systemctl" "--user" "restart" "noctalia"; }
 
     Mod+WheelScrollDown cooldown-ms=150 hotkey-overlay-title="Colonne suivante (molette)" { focus-column-right; }
     Mod+WheelScrollUp   cooldown-ms=150 hotkey-overlay-title="Colonne précédente (molette)" { focus-column-left; }
