@@ -14,7 +14,13 @@ in
     # niri-stable suit les releases, niri-unstable le master.
     # On passe par l'input plutôt que par pkgs.niri-stable : l'overlay du
     # flake n'est pas garanti d'être appliqué selon l'ordre de chargement.
-    package = inputs.niri.packages.${pkgs.stdenv.hostPlatform.system}.niri-stable;
+    #
+    # niri-unstable et pas -stable : le pin `niri-stable` de niri-flake est
+    # resté sur 25.08 (août 2025), donc tout ce que la doc marque
+    # « Since: 25.11 » ou « Since: 26.04 » est inaccessible avec. Contrepartie :
+    # chaque `nix flake update` déplace le compositeur d'un cran de master.
+    # Le cache niri.cachix.org (cf. flake.nix) évite de recompiler.
+    package = inputs.niri.packages.${pkgs.stdenv.hostPlatform.system}.niri-unstable;
   };
 
   # niri ne fournit pas de portal : il faut gnome (screencast) + gtk (fichiers)
