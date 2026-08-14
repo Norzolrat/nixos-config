@@ -462,10 +462,16 @@ in
       default_size = "40% 60%"
       default_margin = 50
 
+      # size et margin sont OBLIGATOIRES par scratchpad : les valeurs de
+      # [piri.scratchpad] ne servent que de gabarit, elles ne comblent pas les
+      # champs manquants. Sans elles, le démon refuse de démarrer avec
+      # « missing field `size` ».
       [scratchpads.spotify]
       command = "spotify"
       app_id = "spotify"
       direction = "fromRight"
+      size = "40% 60%"
+      margin = 50
     '';
 
     home.file."Pictures/Wallpapers/default.png".source = ./wallpapers/default.png;
