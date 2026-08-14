@@ -48,6 +48,15 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # piri : hôte de plugins pour niri, piloté par son IPC. Utilisé ici pour
+    # le plugin scratchpads — niri n'a aucune notion de fenêtre ou de
+    # workspace caché, piri l'obtient en déplaçant la fenêtre flottante hors
+    # de l'écran (calculate_hide_position) et en la ramenant à la demande.
+    piri = {
+      url = "github:Asthestarsfalll/piri";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     zen-browser = {
       url = "github:0xc000022070/zen-browser-flake";
       inputs = {

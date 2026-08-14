@@ -138,7 +138,56 @@
 
   hardware.sensor.iio.enable = true;   # capteur de luminosité (ACPI0008)
   services.libinput.enable = true;     # touchpad SP1520T
-  # Le tactile et le stylet FTSC1000 fonctionnent via i2c-hid, rien à faire.
+
+  # Écran tactile FTSC1000 : le contrôleur se coince et n'émet plus rien.
+  # Symptôme exact : le périphérique reste détecté (udev le marque bien
+  # ID_INPUT_TOUCHSCREEN, niri annonce « touch » dans wl_seat), mais
+  # `libinput debug-events --device /dev/input/event5` reste muet — aucun
+  # réglage du compositeur ne peut donc y changer quoi que ce soit.
+  # La trace côté noyau, présente à chaque démarrage :
+  #   i2c_hid_acpi i2c-FTSC1000:00: failed to get a report from device: -5
+  #   hid-multitouch 0018:2808:5662.0002: failed to fetch feature 5
+  #
+  # Détacher puis rattacher le pilote i2c-hid relance le dialogue I2C et le
+  # tactile repart. On le fait au démarrage et au réveil de veille, les deux
+  # moments où le contrôleur peut se retrouver dans cet état.
+  #
+  # Le touchpad n'est pas touché : c'est un autre périphérique du même bus
+  # (i2c-SP1520T:00), et seul FTSC1000 est réattaché ici.
+  systemd.services.ftsc1000-rebind = {
+    description = "Réinitialise le contrôleur tactile FTSC1000 (i2c-hid)";
+    after = [
+      "suspend.target"
+      "hibernate.target"
+      "hybrid-sleep.target"
+      "suspend-then-hibernate.target"
+    ];
+    wantedBy = [
+      "multi-user.target"
+      "suspend.target"
+      "hibernate.target"
+      "hybrid-sleep.target"
+      "suspend-then-hibernate.target"
+    ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = pkgs.writeShellScript "ftsc1000-rebind" ''
+        set -eu
+        dev="i2c-FTSC1000:00"
+        drv="/sys/bus/i2c/drivers/i2c_hid_acpi"
+
+        # Machine sans cette dalle (ou pilote absent) : on ne fait rien plutôt
+        # que d'échouer, le service ne doit jamais bloquer un démarrage.
+        [ -d "$drv" ] || exit 0
+
+        if [ -e "$drv/$dev" ]; then
+          printf '%s' "$dev" > "$drv/unbind"
+          sleep 1
+        fi
+        printf '%s' "$dev" > "$drv/bind"
+      '';
+    };
+  };
 
   security.tpm2.enable = true;
 

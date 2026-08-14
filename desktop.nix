@@ -1,10 +1,12 @@
-# Environnement de bureau : niri + noctalia (Quickshell) + apps
+# Environnement de bureau : niri + noctalia + apps
 { config, pkgs, lib, inputs, ... }:
 
 let
   username = config.my.username;
 in
 {
+  imports = [ inputs.piri.nixosModules.piri ];
+
   #############################################################################
   # niri
   #############################################################################
@@ -27,6 +29,11 @@ in
     # « failed to get a report from device: -5 » au démarrage.
     package = inputs.niri.packages.${pkgs.stdenv.hostPlatform.system}.niri-stable;
   };
+
+  # piri tourne en service utilisateur (démarré avec graphical-session.target)
+  # et parle à niri par son IPC. Sa configuration est posée côté home-manager
+  # dans ~/.config/niri/piri.toml, le chemin qu'il lit par défaut.
+  services.piri.enable = true;
 
   # niri ne fournit pas de portal : il faut gnome (screencast) + gtk (fichiers)
   xdg.portal = {
@@ -68,6 +75,18 @@ in
       appearance = {
         theme_mode = "dark";
         font_family = "DejaVu Sans Mono";
+
+        # Retire le logo Noctalia de l'écran de connexion.
+        hide_logo = true;
+
+        # Le sélecteur de thème, lui, n'est PAS masquable : aucune clé du
+        # greeter ne le contrôle (vérifié sur la liste complète des clés de
+        # greeter_config_io.cpp), il est disposé sans condition.
+        # « Synced » neutralise au moins son effet : la valeur déclarée ici
+        # l'emporte sur le dernier choix fait dans l'interface, donc un clic
+        # accidentel ne survit pas au redémarrage. La palette continue de
+        # venir de `noctalia msg greeter-sync`, rien n'est figé en dur.
+        scheme = "Synced";
       };
     };
   };
@@ -421,6 +440,33 @@ in
     # de nouvelles images à la main. Si on gérait le dossier entier avec
     # home.file, il deviendrait un symlink en lecture seule et le panneau
     # Noctalia ne pourrait plus rien y ajouter.
+
+    ###########################################################################
+    # piri — scratchpads
+    ###########################################################################
+    # Le plugin scratchpads rend une fenêtre flottante escamotable : piri la
+    # déplace hors de l'écran plutôt que sur un autre workspace (aucun
+    # move_to_workspace déclaré), ce qui donne le comportement « fenêtre
+    # cachée » que niri seul ne sait pas faire.
+    #
+    # Ce fichier est un lien vers le store, donc en lecture seule : la
+    # commande `piri scratchpads <nom> add`, qui enregistre la fenêtre
+    # courante en écrivant dans la config, ne fonctionnera pas. Les
+    # scratchpads se déclarent donc ici, ce qui est de toute façon ce qu'on
+    # veut pour une config versionnée.
+    xdg.configFile."niri/piri.toml".text = ''
+      [piri.plugins]
+      scratchpads = true
+
+      [piri.scratchpad]
+      default_size = "40% 60%"
+      default_margin = 50
+
+      [scratchpads.spotify]
+      command = "spotify"
+      app_id = "spotify"
+      direction = "fromRight"
+    '';
 
     home.file."Pictures/Wallpapers/default.png".source = ./wallpapers/default.png;
     home.file."Pictures/Wallpapers/default.jpg".source = ./wallpapers/default.jpg;

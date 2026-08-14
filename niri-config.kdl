@@ -141,6 +141,12 @@ spawn-at-startup "fcitx5"
 // Traitement audio en service, sans fenêtre.
 spawn-at-startup "easyeffects" "--gapplication-service"
 
+// Spotify démarre avec la session. Il n'a pas de mode « service » : sa
+// fenêtre existe forcément, elle est donc envoyée sur le workspace
+// « scratch » et n'attrape pas le focus (voir la règle de fenêtre plus bas).
+// Mod+S pour l'y rejoindre.
+spawn-at-startup "spotify"
+
 // Aucun surveillant de presse-papiers ici : la v5 gère l'historique
 // elle-même (clipboard_enabled dans config.toml). En lancer un en parallèle
 // créerait des doublons.
@@ -226,6 +232,16 @@ window-rule {
 window-rule {
     match app-id=r#"^steam_app"#
     opacity 1.0
+}
+
+// Spotify, lancé au démarrage : il ne doit ni voler le focus au moment où tu
+// ouvres ta session, ni s'installer sur le workspace courant.
+// Si le workspace « scratch » n'existe pas, niri ouvre la fenêtre sur le
+// workspace courant — mais il est déclaré plus haut, donc ça n'arrivera pas.
+window-rule {
+    match app-id=r#"^spotify$"#
+    open-on-workspace "scratch"
+    open-focused false
 }
 
 // Utilitaires de configuration : ouverts flottants, à 45 % de large.
@@ -395,6 +411,10 @@ binds {
     // contient plusieurs :
     // Mod+Ctrl+Shift+Up   { move-window-to-workspace-up; }
     // Mod+Ctrl+Shift+Down { move-window-to-workspace-down; }
+
+    // Escamote Spotify : piri sort la fenêtre de l'écran et la ramène, sans
+    // changer de workspace. Si Spotify n'est pas lancé, piri le démarre.
+    Mod+M     hotkey-overlay-title="Afficher ou masquer Spotify" { spawn "piri" "scratchpads" "spotify" "toggle"; }
 
     Mod+S     hotkey-overlay-title="Aller au bureau scratch" { focus-workspace "scratch"; }
     Mod+Alt+S hotkey-overlay-title="Envoyer la colonne au bureau scratch" { move-column-to-workspace "scratch"; }
