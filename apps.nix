@@ -94,6 +94,20 @@ in
       # warning de dépréciation sur gtk.gtk4.theme).
       gtk4.theme = null;
 
+      # Le hook GTK de Noctalia (assets/templates/gtk/apply.sh) ne pose
+      # gtk-theme que s'il TROUVE le thème, en cherchant dans ~/.themes,
+      # $XDG_DATA_HOME/themes, /usr/share/themes et $XDG_DATA_DIRS/*/themes.
+      # Sur NixOS le thème n'est que dans le profil, donc visible uniquement
+      # via XDG_DATA_DIRS — or noctalia.service démarre avec
+      # graphical-session.target, avant que la session n'ait forcément importé
+      # cet environnement. Quand la course est perdue, le hook journalise
+      # « Theme not found, skipping GTK theme set », ne pose que color-scheme,
+      # et l'apparence part de travers au démarrage.
+      #
+      # Le lien ci-dessous place le thème dans ~/.themes, le tout premier
+      # chemin testé par le script et le seul qui ne dépende d'aucune variable
+      # d'environnement. Voir [[gtk-theme-depends-on-xdg-data-dirs]].
+
       # Interrupteur natif GTK3, pour les applis qui choisissent leur variante
       # elles-mêmes plutôt que de suivre le nom du thème.
       gtk3.extraConfig.gtk-application-prefer-dark-theme = 1;
@@ -104,6 +118,11 @@ in
       enable = true;
       platformTheme.name = "qtct";   # laisse Noctalia piloter les couleurs
     };
+
+    # Les deux variantes, pour que le hook trouve aussi bien adw-gtk3 (clair)
+    # que adw-gtk3-dark quand tu bascules avec Mod+Alt+D.
+    home.file.".themes/adw-gtk3".source = "${pkgs.adw-gtk3}/share/themes/adw-gtk3";
+    home.file.".themes/adw-gtk3-dark".source = "${pkgs.adw-gtk3}/share/themes/adw-gtk3-dark";
 
     # VLC : application Qt, il suivra le thème qt6ct.
     # Sur niri, forcer Wayland natif évite le tearing sur l'écran 120Hz :
