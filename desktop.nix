@@ -246,20 +246,9 @@ in
   # N'active PAS services.fprintd : le capteur Goodix GXFP5130 de cette
   # machine n'a aucun pilote Linux, et Noctalia attendrait un capteur absent.
 
-  #############################################################################
-  # Steam
-  #############################################################################
-
-  programs.steam = {
-    enable = true;
-    gamescopeSession.enable = true;   # utile pour cadrer sur l'écran 3:2
-    remotePlay.openFirewall = true;
-    localNetworkGameTransfers.openFirewall = true;
-  };
-  programs.gamemode.enable = true;
-
-  # hardware.graphics.enable32Bit est déjà activé dans matebook-gt.nix,
-  # c'est indispensable pour Proton.
+  # Steam, Heroic et GameMode vivent dans ./gaming.nix, importé uniquement par
+  # nixosConfigurations.matebook : ils pèsent plusieurs Go et ne testent aucun
+  # matériel, donc ils restent hors de l'ISO live.
 
   #############################################################################
   # Wayland — variables d'environnement

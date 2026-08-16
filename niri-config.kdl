@@ -289,7 +289,12 @@ binds {
     Mod+Period      hotkey-overlay-title="Lanceur — calcul et emoji" { spawn "noctalia" "msg" "panel-toggle" "launcher"; }
     Mod+Slash       hotkey-overlay-title="Historique des notifications" { spawn "noctalia" "msg" "panel-toggle" "notifications"; }
     Mod+Alt+Slash   hotkey-overlay-title="Mode Ne pas déranger" { spawn "noctalia" "msg" "notification-dnd-toggle"; }
-    Mod+Alt+D       hotkey-overlay-title="Thème clair ou sombre" { spawn "noctalia" "msg" "theme-mode-toggle"; }
+    // theme-mode-toggle ne bascule PAS entre deux états : il cycle sur trois,
+    // sombre → clair → auto → sombre. Le mode « auto » suit le lever et le
+    // coucher du soleil calculés depuis ta position, et fait donc changer le
+    // thème tout seul — y compris la nuit. C'est ce qui est arrivé le
+    // 2026-08-16. On force donc directement le mode sombre.
+    Mod+Alt+D       hotkey-overlay-title="Forcer le thème sombre" { spawn "noctalia" "msg" "theme-mode-set" "dark"; }
     Ctrl+Mod+T      hotkey-overlay-title="Fond d'écran aléatoire" { spawn "noctalia" "msg" "wallpaper-random"; }
     // Le menu de session est un panneau comme les autres en v5.
     Mod+Shift+E     hotkey-overlay-title="Menu de session" { spawn "noctalia" "msg" "panel-toggle" "session"; }

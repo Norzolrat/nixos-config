@@ -16,8 +16,10 @@
     "${modulesPath}/installer/cd-dvd/installation-cd-base.nix"
 
     ./options.nix
-    ./desktop.nix   # niri, noctalia, fish, alacritty, steam, vscode
+    ./desktop.nix   # niri, noctalia, fish, alacritty, vscode
     ./apps.nix      # spotify/spicetify, vesktop, onlyoffice, vlc
+    # PAS ./gaming.nix : Steam et Heroic pèsent plusieurs Go et ne testent
+    # aucun matériel, ils n'ont rien à faire dans l'image live.
   ];
 
   # Le profil d'installation impose le compte « nixos ».
@@ -154,9 +156,9 @@
   #############################################################################
   # Allègement — décommente si l'image est trop grosse
   #############################################################################
-  # Ces deux-là ne testent aucun matériel et pèsent plusieurs Go :
+  # Steam et Heroic sont déjà exclus : ils vivent dans ./gaming.nix, qui n'est
+  # pas importé ici. Reste Spicetify, qui ne teste aucun matériel non plus :
   #
-  # programs.steam.enable = lib.mkForce false;
   # home-manager.users.${config.my.username}.programs.spicetify.enable =
   #   lib.mkForce false;
 

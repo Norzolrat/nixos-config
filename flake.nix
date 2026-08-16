@@ -197,6 +197,7 @@
         ./matebook-gt.nix              # le module matériel
         ./desktop.nix                  # niri + noctalia
         ./apps.nix                     # spotify, discord, bureautique
+        ./gaming.nix                   # steam, heroic — hors ISO, volontairement
         ./secureboot.nix               # lanzaboote (à activer en 2e temps)
 
         lanzaboote.nixosModules.lanzaboote
