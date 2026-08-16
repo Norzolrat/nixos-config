@@ -95,6 +95,38 @@
   # transitive) : virt-manager en a besoin pour retenir ses réglages GTK.
 
   #############################################################################
+  # Réseaux overlay (VPN maillé)
+  #############################################################################
+  # Deux services indépendants, qui peuvent tourner en même temps : ils créent
+  # chacun leur interface (zt* pour ZeroTier, ham0 pour Hamachi) et n'entrent
+  # pas en conflit avec NetworkManager, qui les ignore.
+
+  # ZeroTier : le module ouvre lui-même l'UDP 9993 dans le pare-feu.
+  # Rejoindre un réseau se fait à chaud, l'identité est conservée dans
+  # /var/lib/zerotier-one et survit aux rebuilds :
+  #   sudo zerotier-cli join <ID réseau, 16 caractères hexa>
+  #   sudo zerotier-cli listnetworks
+  # Pour le figer dans la config à la place, renseigner :
+  #   services.zerotierone.joinNetworks = [ "abcdef0123456789" ];
+  services.zerotierone.enable = true;
+
+  # Hamachi : logiciel propriétaire (unfreeRedistributable, couvert par le
+  # allowUnfree de matebook-gt.nix). LogMeIn/GoTo a gelé le client Linux
+  # depuis des années — il fonctionne, mais n'attends ni mise à jour ni
+  # support. Le démon tourne en root et le client dialogue avec lui par une
+  # socket root : les commandes se passent en sudo.
+  #   sudo hamachi login
+  #   sudo hamachi do-join <réseau> <mot de passe>
+  services.logmein-hamachi.enable = true;
+
+  # Le pare-feu reste actif sur les interfaces overlay : les machines du
+  # réseau maillé peuvent te joindre sur les ports déjà ouverts, pas au-delà.
+  # Pour héberger une partie en LAN ou exposer un service aux seuls pairs du
+  # VPN, décommenter — attention, cela donne à tout membre du réseau l'accès
+  # complet aux services locaux :
+  # networking.firewall.trustedInterfaces = [ "zt+" "ham0" ];
+
+  #############################################################################
   # Comptes
   #############################################################################
 
