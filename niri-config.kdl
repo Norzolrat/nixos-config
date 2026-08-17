@@ -138,8 +138,23 @@ workspace "scratch"
 // Méthode de saisie (voir i18n.inputMethod dans desktop.nix).
 spawn-at-startup "fcitx5"
 
-// Traitement audio en service, sans fenêtre.
-spawn-at-startup "easyeffects" "--gapplication-service"
+// EasyEffects n'est PLUS lancé au démarrage.
+//
+// Il s'insérait dans les deux chemins audio en n'y apportant rien : ses
+// chaînes ne contenaient que des instruments de mesure (ee_sie_spectrum,
+// ee_soe_output_level…) et aucun preset n'a jamais été enregistré. En
+// revanche il cassait le micro du casque Bluetooth : les applis captaient
+// « Easy Effects Source », et la détection d'usage du micro par WirePlumber
+// ne traverse pas ses nodes (pas de node.link-group), donc la carte restait
+// en a2dp-sink, sans voie micro — silence total.
+//
+// Sans lui, les applis retombent sur la source par défaut, qui est le casque,
+// et la bascule vers headset-head-unit se fait toute seule.
+//
+// Le paquet reste installé (cf. apps.nix) : `easyeffects` à la main si tu veux
+// un jour un égaliseur ou une réduction de bruit. Dans ce cas, le micro
+// Bluetooth redeviendra muet dans toute appli branchée sur sa source — il
+// faudra y sélectionner le casque explicitement.
 
 // Spotify démarre avec la session. Il n'a pas de mode « service » : sa
 // fenêtre existe forcément, elle est donc envoyée sur le workspace
