@@ -178,34 +178,24 @@ in
     };
   };
 
-  # Micro des casques Bluetooth : bascule de profil manuelle.
+  # Micro des casques Bluetooth : rien à régler ici, c'est côté application.
   #
-  # Par défaut WirePlumber n'expose jamais le micro HFP directement. Il publie
-  # un node loopback muet (bluez_input.<adresse>) et ne bascule la carte de
-  # `a2dp-sink` vers `headset-head-unit` que s'il arrive à remonter le graphe
-  # depuis l'application jusqu'à ce loopback. La traversée d'un filtre exige
-  # que celui-ci porte `node.link-group` — or les nodes d'EasyEffects
-  # (easyeffects_source, ee_sie_*) n'en ont pas. Dès qu'une appli capte via
-  # « Easy Effects Source », la chaîne est coupée : l'auto-switch conclut
-  # « restore » au lieu de « switch », le transport SCO ne s'ouvre jamais et le
-  # micro renvoie du silence pur (constaté : 12 s de capture, que des zéros).
+  # WirePlumber n'expose jamais le micro HFP directement : il publie un node
+  # loopback (bluez_input.<adresse>) et ne bascule la carte de `a2dp-sink` vers
+  # `headset-head-unit` que quand une application se branche dessus. Cette
+  # détection ne traverse pas EasyEffects : elle suit les liens du graphe et
+  # exige que chaque filtre porte `node.link-group`, ce que les nodes
+  # EasyEffects (easyeffects_source, ee_sie_*) n'ont pas. Une appli qui capte
+  # via « Easy Effects Source » n'atteint donc jamais le casque.
   #
-  # On coupe donc l'automatisme. Sans loopback, le vrai micro HFP apparaît
-  # comme une source normale dès que la carte est en profil casque, et
-  # EasyEffects le traite comme n'importe quel autre micro.
+  # Le remède est de sélectionner le casque comme micro DANS l'application
+  # (pas « Easy Effects Source ») : la bascule se fait alors seule et le retour
+  # en A2DP aussi. Corollaire : pas d'effets EasyEffects sur le micro BT, les
+  # deux sont incompatibles.
   #
-  # CONTREPARTIE : le profil doit être choisi à la main avant un appel, et tant
-  # qu'il est actif le son retombe en mono 16 kHz (mSBC) — le HFP n'a pas de
-  # voie retour haute fidélité. À faire depuis le panneau audio de Noctalia,
-  # ou en ligne de commande :
-  #   wpctl status                       # relever l'ID du bluez_card
-  #   wpctl set-profile <ID> headset-head-unit   # micro + audio mono
-  #   wpctl set-profile <ID> a2dp-sink           # retour musique stéréo
-  services.pipewire.wireplumber.extraConfig."51-bluetooth-no-autoswitch" = {
-    "wireplumber.settings" = {
-      "bluetooth.autoswitch-to-headset-profile" = false;
-    };
-  };
+  # NE PAS poser bluetooth.autoswitch-to-headset-profile = false pour
+  # contourner : essayé, ça supprime purement et simplement le micro du casque
+  # de la liste des sources tant que la carte est en A2DP, sans rien résoudre.
 
   services.upower.enable = true;
   # services.power-profiles-daemon est déjà activé dans matebook-gt.nix
