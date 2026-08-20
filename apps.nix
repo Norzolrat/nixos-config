@@ -9,6 +9,7 @@ in
     # Bureautique et média — pas de template Noctalia pour ceux-là
     onlyoffice-desktopeditors
     vlc
+    gimp
 
     # Discord : vesktop embarque Vencord, pas besoin de patcher discord.
     vesktop
