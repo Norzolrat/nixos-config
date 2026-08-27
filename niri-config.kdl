@@ -249,6 +249,30 @@ window-rule {
     opacity 1.0
 }
 
+// Toasts Steam. Steam ne passe PAS par le démon de notifications : il dessine
+// ses toasts lui-même dans une fenêtre CEF X11 (titre
+// notificationtoasts_<id>_desktop, ~425x105). Noctalia ne peut donc ni les
+// empiler, ni les garder en historique, ni leur appliquer ses durées — la
+// seule prise qu'on ait dessus, c'est la fenêtre.
+//
+// Pourquoi elles atterrissent au milieu : Steam positionne la fenêtre avec un
+// XMoveWindow, mais xwayland-satellite ne relaie pas la position des fenêtres
+// gérées. Niri n'a donc aucune consigne et centre le flottant. Le réglage
+// « position des notifications » côté Steam ne change rien pour la même
+// raison ; il faut recaler ici.
+//
+// Coin bas-droit : Noctalia est en top_right et sa pile descend depuis le
+// haut, donc les deux ne se marchent pas dessus.
+window-rule {
+    match title=r#"^notificationtoasts_"#
+    open-floating true
+    open-focused false
+    default-floating-position x=16 y=16 relative-to="bottom-right"
+    // Opaque comme les toasts Noctalia (backgroundOpacity 1) : l'opacité
+    // globale de 0.9 rend un texte court illisible sur fond de jeu.
+    opacity 1.0
+}
+
 // Spotify, lancé au démarrage : il ne doit ni voler le focus au moment où tu
 // ouvres ta session, ni s'installer sur le workspace courant.
 // Si le workspace « scratch » n'existe pas, niri ouvre la fenêtre sur le

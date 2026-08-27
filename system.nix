@@ -83,6 +83,48 @@
 
   virtualisation.docker.enable = true;
 
+  # Distrobox — conteneurs de distribution intégrés à la session.
+  #
+  # Sert à faire tourner ce qui ne s'empaquette pas sur NixOS : ici ZEDFREE
+  # (Zed! Limited Edition de PRIM'X), distribué uniquement en .deb.
+  #
+  # LE BACKEND EST DOCKER, ET C'EST IMPOSÉ EN DEUX ENDROITS.
+  #
+  # Il faut l'imposer parce que l'autodétection de distrobox essaie podman EN
+  # PREMIER et ne tombe sur docker qu'à défaut. Podman n'est pas installé ici,
+  # donc l'autodétection donnerait aujourd'hui le bon résultat — mais il
+  # suffirait qu'un module tire podman en dépendance pour que tous les
+  # conteneurs déjà créés deviennent invisibles du jour au lendemain.
+  #
+  #   1. /etc/distrobox/distrobox.conf, ci-dessous. C'est celui qui compte :
+  #      il vaut pour TOUT contexte, y compris les shells non-login et les
+  #      services systemd, où aucune variable de session n'est chargée.
+  #
+  #   2. DBX_CONTAINER_MANAGER dans l'environnement de session. Les variables
+  #      DBX_* sont lues APRÈS tous les fichiers de config, donc elle a le
+  #      dernier mot ; elle sert de garde-fou si le fichier venait à bouger.
+  #      C'est aussi ce qui rend le choix visible dans un simple « env ».
+  #
+  # Le fichier ne déclare QUE container_manager, volontairement. Le paquet
+  # nixpkgs livre son propre distrobox.conf dans $out/share/distrobox, chargé
+  # en premier de la liste, et c'est lui qui monte /nix dans le conteneur —
+  # sans quoi distrobox-enter n'y retrouve pas ses propres outils. Les
+  # fichiers suivants sont sourcés par-dessus dans le même shell : une
+  # variable qu'ils ne mentionnent pas garde sa valeur. Ne JAMAIS recopier
+  # ici le distrobox.conf d'exemple amont en entier — il pose
+  # container_additional_volumes et écraserait ce montage.
+  environment.etc."distrobox/distrobox.conf".text = ''
+    container_manager="docker"
+  '';
+
+  environment.sessionVariables.DBX_CONTAINER_MANAGER = "docker";
+
+  # Le groupe docker est déjà donné à l'utilisateur dans desktop.nix, et il
+  # est obligatoire ici : sans lui distrobox préfixe chaque appel de sudo, les
+  # conteneurs atterrissent dans l'espace root du démon, et les .desktop
+  # exportés réclameraient un mot de passe à chaque lancement.
+  environment.systemPackages = [ pkgs.distrobox ];
+
   #############################################################################
   # Machines virtuelles (KVM/QEMU)
   #############################################################################

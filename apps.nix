@@ -3,6 +3,44 @@
 
 let
   username = config.my.username;
+
+  ###########################################################################
+  # Type MIME des conteneurs chiffrés ZED! (PRIM'X)
+  ###########################################################################
+  # ZEDFREE tourne dans un conteneur Distrobox Ubuntu (cf. la section
+  # Conteneurs de system.nix) et son .desktop exporté porte bien une ligne
+  # MimeType=application/zed. Ça ne suffit pas : le .deb installe sa
+  # définition de type dans le /usr/share/mime DU CONTENEUR, que l'hôte ne lit
+  # jamais. Sans le doublon ci-dessous, l'hôte ignore qu'un *.zed est autre
+  # chose qu'un binaire quelconque, xdg-mime répond application/octet-stream,
+  # et Nautilus ne propose jamais ZEDFREE — même avec l'appli parfaitement
+  # exportée.
+  #
+  # xdg.mime.enable est à true par défaut sur NixOS : tout paquet de
+  # environment.systemPackages qui expose share/mime/packages/*.xml est agrégé
+  # dans /run/current-system/sw/share/mime à l'activation, update-mime-database
+  # compris. Rien d'autre à déclencher.
+  #
+  # Le contenu est recopié de /usr/share/mime/packages/zed.xml livré par
+  # ZEDFREE-2025.1.14.Ubuntu24.04.amd64.deb, pas déduit de l'extension. Deux
+  # écarts volontaires avec l'original :
+  #   - l'espace de noms est écrit en défaut plutôt qu'en préfixe ns0:, les
+  #     deux sont équivalents pour update-mime-database ;
+  #   - <alias type="application/zed"/> est supprimé : l'original se déclare
+  #     alias de lui-même, ce qui est un artefact de génération sans effet.
+  # Le type est bien « application/zed » et PAS « application/x-zed » : c'est
+  # une exception à la convention x- pour un type non enregistré à l'IANA.
+  zedMimeType = pkgs.writeTextDir "share/mime/packages/zed-primx.xml" ''
+    <?xml version="1.0" encoding="UTF-8"?>
+    <mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+      <mime-type type="application/zed">
+        <comment>ZED! container</comment>
+        <comment xml:lang="fr">Conteneur chiffré ZED!</comment>
+        <glob pattern="*.zed"/>
+        <generic-icon name="zed-file"/>
+      </mime-type>
+    </mime-info>
+  '';
 in
 {
   environment.systemPackages = with pkgs; [
@@ -10,6 +48,11 @@ in
     onlyoffice-desktopeditors
     vlc
     gimp
+
+    # Okular : lecteur PDF/DjVu de KDE. On prend la build Qt6 (kdePackages)
+    # et pas libsForQt5 : les couleurs sont pilotées par qt6ct ici, une build
+    # Qt5 suivrait qt5ct et tirerait une seconde pile de dépendances.
+    kdePackages.okular
 
     # Discord : vesktop embarque Vencord, pas besoin de patcher discord.
     vesktop
@@ -27,6 +70,19 @@ in
     bitwarden-cli
     git
     fastfetch
+
+    # Déclaration du type *.zed pour l'hôte (cf. le let ci-dessus). Ce n'est
+    # pas un paquet pkgs mais une liaison du let : elle a priorité sur le
+    # « with pkgs » de cette liste.
+    zedMimeType
+
+    # update-desktop-database : absent du système jusqu'ici (xdg-mime et
+    # xdg-open, eux, arrivent déjà par une dépendance transitive du portail).
+    # Il est nécessaire après « distrobox-export », pour régénérer le
+    # mimeinfo.cache de ~/.local/share/applications. Sans ce cache, une appli
+    # exportée reste absente de la liste « Ouvrir avec » de Nautilus, même
+    # quand son .desktop déclare bien le MimeType.
+    desktop-file-utils
   ];
 
   # Spotify est unfree ; allowUnfree est déjà posé dans matebook-gt.nix.

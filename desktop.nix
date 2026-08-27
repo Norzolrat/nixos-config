@@ -48,6 +48,38 @@ in
     };
   };
 
+  #############################################################################
+  # Montage automatique des périphériques amovibles
+  #############################################################################
+  # Trois briques distinctes, qu'on confond souvent parce que GNOME et KDE les
+  # embarquent toutes les trois sans le dire. niri ne fournit rien : il faut
+  # les poser à la main.
+  #
+  #   udisks2 — le démon D-Bus qui SAIT monter un périphérique bloc (clé USB,
+  #             disque externe, carte SD) sous /run/media/$USER, sans sudo.
+  #             Mais il ne monte rien de lui-même : il attend qu'on lui demande.
+  #   udiskie — le client qui écoute udisks2 et déclenche le montage dès qu'un
+  #             périphérique apparaît. C'est lui, l'automontage proprement dit.
+  #             Il tourne en service utilisateur (voir home-manager plus bas).
+  #   gvfs    — la couche FUSE de GTK, et la SEULE qui réponde au cas du
+  #             téléphone : un Android en mode « transfert de fichiers »
+  #             n'expose pas un périphérique bloc, mais du MTP — un protocole
+  #             qui parle par-dessus USB. Aucun mount classique ne peut le
+  #             monter et udisks2 ne le verra jamais ; seul le backend
+  #             gvfs-mtp le présente à Nautilus.
+  services.udisks2.enable = true;
+  services.gvfs.enable = true;
+
+  # Règles udev de libmtp. Sans elles le noyau détecte bien le téléphone, mais
+  # le nœud USB reste root:root : gvfs-mtp échoue silencieusement en
+  # « permission denied » et rien n'apparaît dans Nautilus.
+  services.udev.packages = [ pkgs.libmtp.out ];
+
+  # Le pilote noyau ntfs3 lit le NTFS, mais udisks2 monte en écriture via le
+  # helper mount.ntfs. Sans ce flag, un disque externe formaté sous Windows
+  # se monte en lecture seule — ou refuse de se monter.
+  boot.supportedFilesystems.ntfs = true;
+
   # Greeter assorti au thème Noctalia.
   #
   # Ce bloc ne déclare QUE ce qui doit rester figé. Tout ce qui touche à
@@ -409,13 +441,43 @@ in
       };
       # fish n'est pas POSIX : nix-shell / nix develop repassent par bash et
       # tu perds ton shell dans les sous-environnements. any-nix-shell corrige.
+      #
+      # Le garde command -q est là pour Distrobox : le conteneur monte ce
+      # config.fish depuis le home partagé, mais any-nix-shell vit dans le
+      # profil home-manager, absent du PATH côté conteneur. Sans le garde,
+      # chaque shell ouvert dans le conteneur s'ouvre sur une erreur fish.
       interactiveShellInit = ''
         set -g fish_greeting
-        any-nix-shell fish --info-right | source
+        if command -q any-nix-shell
+          any-nix-shell fish --info-right | source
+        end
       '';
     };
 
     home.packages = [ pkgs.any-nix-shell ];
+
+    ###########################################################################
+    # udiskie — automontage des clés et disques USB
+    ###########################################################################
+    # Le pendant utilisateur de services.udisks2 : c'est ce service qui écoute
+    # les événements et demande le montage. Il doit tourner dans la session
+    # graphique (le module le rattache à graphical-session.target), et non en
+    # service système, parce que le montage est fait AU NOM de l'utilisateur —
+    # c'est ce qui autorise polkit sans mot de passe et place le point de
+    # montage dans /run/media/$USER.
+    #
+    # Il ne gère QUE les périphériques bloc. Le téléphone en MTP passe par
+    # gvfs et apparaît directement dans la barre latérale de Nautilus, sans
+    # intervention d'udiskie.
+    services.udiskie = {
+      enable = true;
+      automount = true;
+      notify = true;
+
+      # "auto" n'affiche l'icône que lorsqu'un périphérique est présent ;
+      # elle sert à démonter proprement avant de débrancher.
+      tray = "auto";
+    };
 
     ###########################################################################
     # Alacritty
