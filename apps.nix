@@ -70,6 +70,7 @@ in
     bitwarden-cli
     git
     fastfetch
+    affine
 
     # Déclaration du type *.zed pour l'hôte (cf. le let ci-dessus). Ce n'est
     # pas un paquet pkgs mais une liaison du let : elle a priorité sur le
