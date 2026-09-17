@@ -67,12 +67,22 @@ output "HDMI-A-1" {
     position x=1920 y=0
 }
 
-// Filet de sécurité si niri se fige encore au démarrage avec l'eGPU branché.
-// niri énumère toutes les cartes DRM et en ajoute une comme GPU de rendu ;
-// cette ligne le force sur l'iGPU Arc. Normalement inutile : nouveau est
-// blacklisté (voir matebook-gt.nix / iso.nix), donc l'eGPU n'expose aucun
-// nœud DRM tant qu'on n'a pas démarré sur l'entrée « egpu ».
-// Vérifie le bon nœud avant de décommenter : `ls -l /dev/dri/by-path/`.
+// ESSENTIEL — ne pas retirer. niri énumère toutes les cartes DRM et en choisit
+// une comme GPU de rendu ; cette ligne le fixe sur l'iGPU Arc.
+//
+// Ce n'est plus un simple filet de sécurité depuis que le pilote NVIDIA est
+// activé (matebook-gt.nix) : la 4070 expose désormais un vrai nœud DRM quand
+// elle est branchée, et sans cet épinglage niri pourrait rendre la session
+// dessus — l'écran du portable s'éteindrait, et débrancher l'eGPU ferait
+// tomber la session.
+//
+// L'adresse est un chemin PCI, pas un « renderD128 » : le nommage DRM n'est
+// pas stable (l'Arc est « card1 », pas « card0 ») et il bouge selon l'ordre de
+// sonde, alors que le chemin PCI de l'iGPU ne change jamais.
+// Pour retrouver les nœuds : `ls -l /dev/dri/by-path/`.
+//
+// Contrepartie assumée : tout le rendu passe par l'Arc. Pour faire tourner un
+// jeu sur la 4070, le lancer avec `prime-run` (défini dans matebook-gt.nix).
 debug {
 //     render-drm-device "/dev/dri/renderD128"
     render-drm-device "/dev/dri/by-path/pci-0000:00:02.0-render"
@@ -91,6 +101,7 @@ layout {
         proportion 0.33333
         proportion 0.5
         proportion 0.66667
+        proportion 1.0
     }
     default-column-width { proportion 0.5; }
 
@@ -293,6 +304,15 @@ window-rule {
     default-column-width { proportion 0.45; }
 }
 
+// Mission Center (Ctrl+Shift+Échap) : flottant, comme un gestionnaire de
+// tâches qu'on ouvre par-dessus le travail en cours puis qu'on referme.
+window-rule {
+    match app-id=r#"^io\.missioncenter\.MissionCenter$"#
+    open-floating true
+    default-column-width { proportion 0.6; }
+    default-window-height { proportion 0.75; }
+}
+
 // Picture-in-Picture : flottant, ancré en bas à droite.
 window-rule {
     match title=r#"[Pp]icture[-\s]?[Ii]n[-\s]?[Pp]icture"#
@@ -473,7 +493,7 @@ binds {
     Mod+E       hotkey-overlay-title="Explorateur de fichiers (Nautilus)" { spawn "nautilus"; }
     Mod+Shift+W hotkey-overlay-title="Suite bureautique (OnlyOffice)" { spawn "onlyoffice-desktopeditors"; }
     Ctrl+Mod+V  hotkey-overlay-title="Mixeur audio (pavucontrol)" { spawn "pavucontrol"; }
-    Ctrl+Shift+Escape hotkey-overlay-title="Moniteur système (btop)" { spawn "alacritty" "-e" "btop"; }
+    Ctrl+Shift+Escape hotkey-overlay-title="Moniteur système (Mission Center)" { spawn "missioncenter"; }
 
     //"Session"
     Mod+Shift+L hotkey-overlay-title="Mettre en veille" { spawn "systemctl" "suspend"; }

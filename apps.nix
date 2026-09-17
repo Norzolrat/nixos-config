@@ -72,6 +72,11 @@ in
     fastfetch
     affine
 
+    # Moniteur système GTK. Il affiche aussi les GPU : l'Arc, et la RTX 4070
+    # quand l'eGPU est branché. Le paquet embarque le moteur de nvtop et passe
+    # par addDriverRunpath, il trouve donc seul la bibliothèque NVML du pilote.
+    mission-center
+
     # Déclaration du type *.zed pour l'hôte (cf. le let ci-dessus). Ce n'est
     # pas un paquet pkgs mais une liaison du let : elle a priorité sur le
     # « with pkgs » de cette liste.
@@ -85,6 +90,43 @@ in
     # quand son .desktop déclare bien le MimeType.
     desktop-file-utils
   ];
+
+  ###########################################################################
+  # Mission Center — « Enabling Additional Values »
+  ###########################################################################
+  # Le bouton « Run Additional Setup » de Mission Center ne peut PAS marcher
+  # sur NixOS : son script commence par #!/bin/bash (absent, d'où l'erreur
+  # « No such file or directory »), pose des capacités sur un binaire du store
+  # en lecture seule, écrit dans /etc/udev/rules.d que NixOS ne lit pas, et
+  # appelle /usr/bin/chmod. Voici l'équivalent déclaratif de ses trois actions.
+  #
+  # 1. Ventilateurs (sensors-detect) : rien à faire, acpi_fan expose déjà
+  #    fan1_input sur cette machine.
+
+  # 2. Consommation CPU/iGPU : Mission Center lit les compteurs RAPL
+  #    (energy_uj), que le noyau réserve à root.
+  #    Compromis de sécurité ASSUMÉ : le noyau les a fermés à cause de
+  #    PLATYPUS (CVE-2020-8694), une attaque par canal auxiliaire qui déduit des
+  #    secrets de la consommation électrique. Elle suppose déjà du code malveillant
+  #    exécuté sur la machine. Pour retirer ce compromis, supprimer cette règle :
+  #    Mission Center n'affichera simplement plus la consommation CPU.
+  services.udev.extraRules = ''
+    SUBSYSTEM=="powercap", KERNEL=="intel-rapl*", RUN+="${pkgs.coreutils}/bin/chmod a+r /sys/%p/energy_uj"
+  '';
+
+  # 3. Débit réseau par processus : Mission Center lance « nethogs » (trouvé
+  #    par le PATH), qui a besoin de capacités pour lire le trafic de tous les
+  #    processus. Un wrapper NixOS dans /run/wrappers/bin, qui passe avant le
+  #    reste du PATH, les lui donne — mêmes capacités que le script d'origine.
+  #    Limité au groupe wheel plutôt qu'à tous les comptes, contrairement au
+  #    script, puisque cap_dac_read_search et cap_sys_ptrace sont larges.
+  security.wrappers.nethogs = {
+    source = "${pkgs.nethogs}/bin/nethogs";
+    capabilities = "cap_net_admin,cap_net_raw,cap_dac_read_search,cap_sys_ptrace+pe";
+    owner = "root";
+    group = "wheel";
+    permissions = "u+rx,g+x";
+  };
 
   # Spotify est unfree ; allowUnfree est déjà posé dans matebook-gt.nix.
 

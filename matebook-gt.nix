@@ -34,11 +34,12 @@
     "nouveau.modeset=0"
   ];
 
-  # nouveau ne gère pas une Ada Lovelace derrière un lien Thunderbolt : init
-  # GSP en timeout, erreurs AER, gel puis redémarrage — typiquement au
-  # lancement du compositeur, qui est ce qui ouvre les nœuds DRM en premier.
-  # Le pilote NVIDIA étant désactivé pour le moment (cf. plus bas), c'est ce
-  # blacklist qui empêche tout module de réclamer la carte au branchement.
+  # Redondant depuis la réactivation de nvidia : le module NixOS blackliste déjà
+  # nouveau, nova_core et nvidiafb de lui-même. On le garde comme filet — il
+  # agit même si le bloc nvidia venait à être recommenté, et nouveau ne sait pas
+  # initialiser une Ada Lovelace au bout d'un tunnel Thunderbolt.
+  # À noter : nvidiafb existe bien dans ce noyau et n'était PAS couvert ici ;
+  # c'est le module NixOS qui bouche ce trou au passage.
   boot.blacklistedKernelModules = [ "nouveau" ];
 
   #############################################################################
@@ -76,27 +77,79 @@
   # Après le premier branchement : `boltctl list` puis `boltctl enroll <uuid>`
 
   #############################################################################
-  # eGPU NVIDIA RTX 4070 — DÉSACTIVÉ pour le moment (freeze au boot/branchement)
+  # eGPU NVIDIA RTX 4070 (Thunderbolt 5)
   #############################################################################
-  # Tentative « toujours installé, actif seulement si branché » : a provoqué
-  # un freeze. Tout le bloc nvidia est coupé le temps de comprendre pourquoi.
-  # nouveau reste blacklisté juste en dessous (section noyau) comme filet de
-  # sécurité : sans lui ET sans nvidia, brancher l'eGPU ne ferait rien planter,
-  # la carte serait juste inutilisée.
+  # Avec le module NVIDIA ouvert, la carte décrochait ~7 s après le chargement du
+  # pilote : le lien Thunderbolt tombait pendant le démarrage du firmware GSP
+  # (« retimer disconnected », puis Xid 79 « GPU has fallen off the bus »), et au
+  # démarrage avec le dock branché la machine se coupait en boucle. Résolu le
+  # 2026-09-13 en passant au module fermé sans GSP (voir hardware.nvidia).
+  #
+  # Écartés en chemin, sans effet : alimentation, câble, écran branché,
+  # pcie_port_pm=off, thunderbolt.clx=0, ASPM en « performance ». Le matériel
+  # n'a jamais été en cause : il fonctionne tel quel sous Windows.
+  #
+  # Ce qui rend ce bloc sûr quand l'eGPU est ABSENT : services.xserver.enable
+  # vaut false (niri est du Wayland pur), or le module NixOS ne met "nvidia",
+  # "nvidia_modeset" et "nvidia_drm" dans boot.kernelModules que si X11 est
+  # activé. Ils ne sont donc PAS chargés au démarrage : c'est udev qui les
+  # charge quand la carte apparaît sur le bus PCI. Pas de dock, pas de pilote.
+  services.xserver.videoDrivers = [ "nvidia" ];
 
-  # services.xserver.videoDrivers = [ "nvidia" ];
+  hardware.nvidia = {
+    # Module FERMÉ sans firmware GSP — c'est ce qui fait tenir l'eGPU.
+    #
+    # Le module ouvert (normalement recommandé pour une Ada Lovelace) impose le
+    # firmware GSP, dont le démarrage fait tomber le lien Thunderbolt ~7 s après
+    # le chargement du pilote. Le module fermé est le seul capable de s'en
+    # passer ; vérifié le 2026-09-13 : nvidia-smi voit la carte, aucun Xid, et
+    # /proc/driver/nvidia/params indique « EnableGpuFirmware: 0 ».
+    # Ne PAS repasser à open = true : le module ouvert refuse de tourner sans GSP
+    # (le module NixOS l'impose d'ailleurs par une assertion).
+    #
+    # Coût sécurité : aucun. Le module NixOS n'ajoute « ibt=off » aux paramètres
+    # noyau que si le pilote ne gère pas l'Indirect Branch Tracking ; le module
+    # fermé 595.84 la gère (ibtSupport = true). À revérifier en changeant de
+    # branche de pilote : `nix eval` sur boot.kernelParams, ibt=off doit en être
+    # absent.
+    open = false;
+    gsp.enable = false;                                 # n'embarque pas le firmware
+    moduleParams.nvidia.NVreg_EnableGpuFirmware = 0;    # et interdit au pilote de l'utiliser
+    modesetting.enable = true;
+    nvidiaSettings = true;
+    package = config.boot.kernelPackages.nvidiaPackages.stable;  # 595.84
+
+    # Laissé au défaut (false) volontairement : la reprise après suspension est
+    # le point faible d'un eGPU, le lien Thunderbolt pouvant disparaître pendant
+    # le sommeil. À ne tenter qu'une fois le reste stabilisé.
+    # powerManagement.enable = false;
+
+    # Pas de PRIME : il sert aux GPU internes muxés et exige des identifiants de
+    # bus figés — or celui de l'eGPU disparaît dès qu'on le débranche.
+    # L'équivalent ici est prime-run, juste en dessous.
+  };
+
+  #############################################################################
+  # Choix du GPU — l'Arc affiche, la 4070 calcule à la demande
+  #############################################################################
+  # niri est épinglé sur l'iGPU Intel par chemin PCI stable, dans
+  # niri-config.kdl (bloc debug / render-drm-device). Ce n'est pas un détail :
+  # le nommage DRM n'est pas stable — l'Arc est actuellement « card1 » et non
+  # « card0 », et ça bougera encore quand la 4070 sera pilotée. Le chemin PCI,
+  # lui, ne bouge jamais. C'est ce qui garantit que l'écran du portable
+  # fonctionne toujours, eGPU branché ou non, et que le débranchement à chaud
+  # ne fait pas tomber la session.
   #
-  # hardware.nvidia = {
-  #   # Ada Lovelace (série 40) : les modules noyau ouverts sont recommandés.
-  #   open = true;
-  #   modesetting.enable = true;
-  #   nvidiaSettings = true;
-  #   package = config.boot.kernelPackages.nvidiaPackages.stable;
+  # Conséquence assumée : tout le rendu de la session passe par l'Arc. Pour
+  # qu'un jeu s'exécute réellement sur la 4070, il faut le lancer via prime-run,
+  # qui bascule ce seul processus sur la carte :
   #
-  #   # Pas de PRIME ici : PRIME sert aux GPU internes muxés, pas à un eGPU.
-  #   # Branche ton écran directement sur la 4070 pour éviter le reverse PRIME
-  #   # (qui refait passer le rendu par le lien Thunderbolt et coûte des FPS).
-  # };
+  #   prime-run vkcube
+  #   prime-run steam          (ou, dans les options d'un jeu : prime-run %command%)
+  #
+  # Sans lui, l'application tourne sur l'Arc — il n'y a pas de bascule
+  # automatique, c'est le prix de la robustesse choisie ci-dessus.
+  # prime-run est défini plus bas, dans environment.systemPackages.
 
   #############################################################################
   # Audio — SOF (Meteor Lake) + codec Realtek ALC256
@@ -204,11 +257,37 @@
     pciutils
     usbutils
     lm_sensors
-    nvtopPackages.full
+    nvtopPackages.full   # affiche les deux GPU : Arc et, si branchée, la 4070
     alsa-utils
     libinput
     v4l-utils
     libva-utils
+
+    # Exécute une seule application sur l'eGPU sans déplacer la session, qui
+    # reste rendue par l'Arc (cf. la section « Choix du GPU » plus haut).
+    # Refuse de s'exécuter si aucun GPU NVIDIA n'est actif, plutôt que de
+    # laisser l'application démarrer silencieusement sur le mauvais GPU.
+    (writeShellScriptBin "prime-run" ''
+      if [ -z "$(ls -A /proc/driver/nvidia/gpus 2>/dev/null)" ]; then
+        echo "prime-run : aucun GPU NVIDIA actif." >&2
+        echo "            L'eGPU est-il branché et autorisé ? (boltctl list)" >&2
+        exit 1
+      fi
+      export __NV_PRIME_RENDER_OFFLOAD=1
+      export __GLX_VENDOR_LIBRARY_NAME=nvidia
+      export __VK_LAYER_NV_optimus=NVIDIA_only
+      # La couche NV_optimus ci-dessus ne suffit PAS en Vulkan : la couche Mesa
+      # device_select, chargée elle aussi, laisse l'Arc en premier dans la liste,
+      # et la plupart des jeux (Proton/DXVK compris) prennent le premier GPU.
+      # Vérifié le 2026-09-13 avec vulkaninfo : sans cette ligne, l'Arc reste en
+      # tête ; avec, seule la RTX 4070 est visible. Filtrer au niveau du chargeur
+      # Vulkan ne dépend d'aucune couche.
+      # « *nvidia* » et pas « nvidia* » : le filtre porte sur le nom du fichier
+      # du pilote, et le conteneur pressure-vessel des jeux Proton recopie ces
+      # fichiers sous un nom préfixé. Mêmes variables dans gaming.nix (Steam).
+      export VK_LOADER_DRIVERS_SELECT='*nvidia*'
+      exec "$@"
+    '')
   ];
 
   #############################################################################

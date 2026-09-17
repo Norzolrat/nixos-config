@@ -7,6 +7,29 @@
 
 { pkgs, ... }:
 
+let
+  # Bascule sur la RTX 4070 si l'eGPU est branché et piloté ; ne fait rien
+  # sinon, et l'application reste sur l'Arc. Évalué à CHAQUE lancement de
+  # Steam ou d'Heroic, dans leur conteneur, et hérité par les jeux.
+  #
+  # Mêmes variables que prime-run (matebook-gt.nix), pour les mêmes raisons ;
+  # voir les commentaires là-bas, notamment pour VK_LOADER_DRIVERS_SELECT.
+  #
+  # Limites, valables pour Steam comme pour Heroic :
+  # - Le choix est figé tant que l'application tourne, et toutes deux restent
+  #   en arrière-plan quand on ferme leur fenêtre. Brancher le dock APRÈS les
+  #   avoir lancées ne suffit pas : les quitter complètement puis les relancer.
+  # - Les quitter AVANT de débrancher le dock : lancées sur la 4070, elles
+  #   perdent leur GPU, et le jeu en cours avec.
+  offloadIfEgpu = ''
+    if [ -n "$(ls -A /proc/driver/nvidia/gpus 2>/dev/null)" ]; then
+      export __NV_PRIME_RENDER_OFFLOAD=1
+      export __GLX_VENDOR_LIBRARY_NAME=nvidia
+      export __VK_LAYER_NV_optimus=NVIDIA_only
+      export VK_LOADER_DRIVERS_SELECT='*nvidia*'
+    fi
+  '';
+in
 {
   #############################################################################
   # Steam
@@ -14,6 +37,12 @@
 
   programs.steam = {
     enable = true;
+
+    # GPU choisi automatiquement au lancement (voir offloadIfEgpu plus haut).
+    # extraProfile s'exécute dans le conteneur de Steam avant son démarrage,
+    # quel que soit le point d'entrée : menu, terminal ou lien steam://.
+    package = pkgs.steam.override { extraProfile = offloadIfEgpu; };
+
     gamescopeSession.enable = true;   # utile pour cadrer sur l'écran 3:2
     remotePlay.openFirewall = true;
     localNetworkGameTransfers.openFirewall = true;
@@ -57,6 +86,25 @@
 
   environment.systemPackages = [
     (pkgs.heroic.override {
+      # GPU choisi automatiquement au lancement (voir offloadIfEgpu plus haut).
+      # Le paquet heroic, contrairement à steam, ne transmet pas extraProfile à
+      # son conteneur. On remplace donc l'exécutable « heroic » de
+      # heroic-unwrapped par un lanceur qui fait la détection puis exécute le
+      # vrai Heroic. Le conteneur lance « heroic » par son nom (runScript), et
+      # l'entrée de menu aussi (Exec=heroic %u) : tous les chemins y passent.
+      heroic-unwrapped = pkgs.symlinkJoin {
+        name = "heroic-unwrapped-egpu-${pkgs.heroic-unwrapped.version}";
+        inherit (pkgs.heroic-unwrapped) version meta;
+        paths = [ pkgs.heroic-unwrapped ];
+        postBuild = ''
+          rm $out/bin/heroic
+          ln -s ${pkgs.writeShellScript "heroic" ''
+            ${offloadIfEgpu}
+            exec ${pkgs.heroic-unwrapped}/bin/heroic "$@"
+          ''} $out/bin/heroic
+        '';
+      };
+
       # extraPkgs → targetPkgs : les binaires que Heroic appelle depuis les
       # réglages par jeu. Sans eux, les cases correspondantes ne font rien.
       extraPkgs = p: with p; [

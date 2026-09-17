@@ -17,10 +17,12 @@
   #
   # boot.loader.systemd-boot.enable est défini dans matebook-gt.nix.
 
-  # 1 seconde, pas 0 : la spécialisation « egpu » est une entrée du menu, et
-  # avec un délai nul il faut deviner le bon moment pour taper sur une touche.
-  # Passe à 0 si tu ne démarres jamais sur l'eGPU — le menu reste alors
-  # accessible en maintenant Espace pendant le POST.
+  # 1 seconde, pas 0 : avec un délai nul il faut deviner le bon moment pour
+  # taper sur une touche. Garder le menu atteignable est ce qui permet de
+  # revenir à la génération précédente quand un rebuild rend le système
+  # inutilisable — la raison de loin la plus utile ici.
+  # (Un commentaire parlait d'une spécialisation « egpu » : elle n'a jamais
+  # existé, aucun `specialisation` n'est déclaré dans cette configuration.)
   boot.loader.timeout = lib.mkDefault 1;
 
   # L'éditeur de ligne de commande du menu permet d'ajouter init=/bin/sh :
@@ -94,6 +96,6 @@
   # - Pas de « nomodeset » ni de désactivation de KMS : le splash a besoin du
   #   pilote i915/xe chargé tôt, c'est justement ce qui rend la transition
   #   fluide sur l'iGPU Arc.
-  # - Pas de systemd-boot en timeout 0 par défaut : voir plus haut, l'entrée
-  #   egpu deviendrait pénible à atteindre.
+  # - Pas de systemd-boot en timeout 0 par défaut : voir plus haut, revenir à
+  #   la génération précédente deviendrait pénible.
 }
