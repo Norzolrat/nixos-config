@@ -128,4 +128,45 @@ in
       extraLibraries = p: with p; [ gamemode ];
     })
   ];
+
+  #############################################################################
+  # Roblox — via Sober (Flatpak), pas de paquet nixpkgs
+  #############################################################################
+  #
+  # Roblox ne publie aucun client Linux. Sober (projet VinegarHQ) fait tourner
+  # le vrai client Windows de Roblox sous Linux via une intégration Wine sur
+  # mesure — pas Proton générique. Son équipe distribue UNIQUEMENT sur
+  # Flathub, volontairement : Roblox pousse des mises à jour client fréquentes
+  # et cassantes (l'anticheat Hyperion vérifie la version), et une build
+  # nixpkgs classique prendrait toujours du retard sur le rythme de Flathub.
+  # D'où nix-flatpak (cf. flake.nix) plutôt qu'un paquet dans
+  # environment.systemPackages.
+  #
+  # Conséquence à garder en tête : Sober échappe à la reproductibilité Nix
+  # habituelle. `nixos-rebuild` ne le fige pas dans flake.lock, Flathub peut
+  # le mettre à jour de façon autonome entre deux rebuilds.
+  services.flatpak = {
+    enable = true;
+
+    remotes = [{
+      name = "flathub";
+      location = "https://dl.flathub.org/repo/flathub.flatpakrepo";
+    }];
+
+    packages = [ "org.vinegarhq.Sober" ];
+
+    # Mise à jour manuelle (flatpak update) plutôt qu'automatique : Sober sort
+    # ses propres versions au rythme de Roblox, autant garder la main sur le
+    # moment où ça bouge plutôt que de laisser un timer systemd le faire la
+    # nuit.
+    update.auto.enable = false;
+  };
+
+  # Sober est un Flatpak classique (portals xdg-desktop-portal-gnome/gtk déjà
+  # posés dans desktop.nix) : pas besoin du bricolage extraProfile/FHS de
+  # Steam et Heroic ci-dessus. Pour le faire basculer sur la RTX 4070 quand
+  # l'eGPU est branché, il faudrait un override Flatpak déclaratif
+  # (services.flatpak.overrides."org.vinegarhq.Sober".Environment.*) — pas
+  # fait ici faute de retour d'expérience sur le rendu Sober côté PRIME
+  # offload ; à ajouter si besoin, sur le même principe que offloadIfEgpu.
 }

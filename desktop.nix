@@ -438,6 +438,13 @@ in
       shellAliases = {
         rebuild = "sudo nixos-rebuild switch --flake ~/nixos#matebook";
         rebuild-test = "sudo nixos-rebuild test --flake ~/nixos#matebook";
+
+        # Sober (Roblox, cf. gaming.nix) : Flatpak n'exporte que le nom
+        # complet de l'appli comme commande (org.vinegarhq.Sober), jamais un
+        # alias court — d'où ces deux raccourcis vers les deux noms sous
+        # lesquels on pense au jeu.
+        sober = "flatpak run org.vinegarhq.Sober";
+        roblox = "flatpak run org.vinegarhq.Sober";
       };
       # fish n'est pas POSIX : nix-shell / nix develop repassent par bash et
       # tu perds ton shell dans les sous-environnements. any-nix-shell corrige.

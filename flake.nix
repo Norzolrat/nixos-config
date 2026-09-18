@@ -64,6 +64,16 @@
         home-manager.follows = "home-manager";
       };
     };
+
+    # nix-flatpak : gestion déclarative des remotes/paquets Flatpak
+    # (services.flatpak.*). Nécessaire pour Sober (Roblox, cf. gaming.nix) :
+    # ce n'est PAS un paquet nixpkgs, son équipe ne publie que sur Flathub —
+    # Roblox pousse des mises à jour client fréquentes et cassantes, un
+    # paquet nixpkgs prendrait systématiquement du retard. En dehors de
+    # cette exception, tout le reste de la machine reste du Nix pur.
+    # Flake sans dépendance nixpkgs propre (juste des modules), pas de
+    # `follows` à poser ici contrairement aux autres entrées.
+    nix-flatpak.url = "github:gmodena/nix-flatpak";
   };
 
   # Caches binaires : sans ça tu recompiles Quickshell (gros build Qt)
@@ -79,7 +89,7 @@
     ];
   };
 
-  outputs = inputs@{ self, nixpkgs, home-manager, lanzaboote, niri, noctalia-greeter, ... }:
+  outputs = inputs@{ self, nixpkgs, home-manager, lanzaboote, niri, noctalia-greeter, nix-flatpak, ... }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs {
@@ -204,6 +214,7 @@
         niri.nixosModules.niri
         home-manager.nixosModules.home-manager
         noctalia-greeter.nixosModules.default
+        nix-flatpak.nixosModules.nix-flatpak
       ];
     };
   };
