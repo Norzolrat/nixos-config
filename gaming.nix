@@ -5,7 +5,7 @@
 # plusieurs Go à eux deux et ne testent aucun matériel, donc ils n'ont rien
 # à faire dans une image dont le seul but est de valider la machine.
 
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 
 let
   # Bascule sur la RTX 4070 si l'eGPU est branché et piloté ; ne fait rien
@@ -28,6 +28,23 @@ let
       export __VK_LAYER_NV_optimus=NVIDIA_only
       export VK_LOADER_DRIVERS_SELECT='*nvidia*'
     fi
+  '';
+
+  # Lanceur du Flatpak Hytale, voir la section Hytale plus bas.
+  hytale = pkgs.writeShellScriptBin "hytale" ''
+    env_args=()
+    if [ -n "$(ls -A /proc/driver/nvidia/gpus 2>/dev/null)" ]; then
+      env_args=(
+        --env=__NV_PRIME_RENDER_OFFLOAD=1
+        --env=__GLX_VENDOR_LIBRARY_NAME=nvidia
+        --env=__VK_LAYER_NV_optimus=NVIDIA_only
+        '--env=VK_LOADER_DRIVERS_SELECT=*nvidia*'
+      )
+    fi
+    exec flatpak run "''${env_args[@]}" \
+      --branch=master --arch=x86_64 \
+      --command=hytale-launcher-wrapper \
+      com.hypixel.HytaleLauncher "$@"
   '';
 in
 {
@@ -127,6 +144,7 @@ in
       # décroche sur tout jeu 32 bits.
       extraLibraries = p: with p; [ gamemode ];
     })
+    hytale
   ];
 
   #############################################################################
@@ -169,4 +187,43 @@ in
   # (services.flatpak.overrides."org.vinegarhq.Sober".Environment.*) — pas
   # fait ici faute de retour d'expérience sur le rendu Sober côté PRIME
   # offload ; à ajouter si besoin, sur le même principe que offloadIfEgpu.
+
+  #############################################################################
+  # Hytale — launcher officiel (Flatpak), installé à la main
+  #############################################################################
+  #
+  # Hytale n'est ni dans nixpkgs ni sur Flathub : le .flatpak se télécharge sur
+  # le site officiel et s'installe en --user (`flatpak install --user`). Il
+  # échappe donc à nix-flatpak, comme Sober, et se met à jour tout seul.
+  #
+  # Un Flatpak n'hérite pas de l'environnement de l'hôte : les variables PRIME
+  # d'offloadIfEgpu doivent passer par --env. Même condition que pour Steam et
+  # Heroic : sans eGPU, rien n'est forcé et le jeu reste sur l'Arc (forcer
+  # nvidia sans carte casserait GL et Vulkan). Le choix est figé au lancement
+  # du launcher, donc à relancer après avoir branché le dock, et à quitter
+  # avant de le débrancher.
+  #
+  # Le Flatpak a besoin de l'extension GL NVIDIA de la MÊME version que le
+  # pilote hôte (org.freedesktop.Platform.GL.nvidia-<version>). Après une mise
+  # à jour du pilote : `flatpak update`, sinon le jeu retombe sur Mesa.
+  # Le wrapper « hytale » est défini dans le let en haut du fichier et ajouté
+  # à environment.systemPackages avec Heroic.
+
+  # Même identifiant que l'entrée exportée par Flatpak. Elle doit aller dans
+  # ~/.local/share/applications (XDG_DATA_HOME, prioritaire) et non dans le
+  # profil home-manager : flatpak/exports figure avant /etc/profiles dans
+  # XDG_DATA_DIRS et masquerait cette entrée. Le menu n'affiche ainsi qu'une
+  # seule entrée « Hytale Launcher », celle qui passe par le wrapper.
+  home-manager.users.${config.my.username}.xdg.dataFile."applications/com.hypixel.HytaleLauncher.desktop".text = ''
+    [Desktop Entry]
+    Type=Application
+    Name=Hytale Launcher
+    Comment=Official launcher for Hytale
+    Exec=hytale
+    Icon=com.hypixel.HytaleLauncher
+    Terminal=false
+    Categories=Game;
+    Keywords=hytale;game;launcher;hypixel;
+    StartupWMClass=com.hypixel.HytaleLauncher
+  '';
 }
