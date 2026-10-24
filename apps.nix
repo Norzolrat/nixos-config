@@ -44,20 +44,17 @@ let
 in
 {
   environment.systemPackages = with pkgs; [
-    # Bureautique et média — pas de template Noctalia pour ceux-là
     onlyoffice-desktopeditors
     vlc
     gimp
 
-    # Okular : lecteur PDF/DjVu de KDE. On prend la build Qt6 (kdePackages)
-    # et pas libsForQt5 : les couleurs sont pilotées par qt6ct ici, une build
-    # Qt5 suivrait qt5ct et tirerait une seconde pile de dépendances.
+    mkchromecast
+
     kdePackages.okular
 
-    # Discord : vesktop embarque Vencord, pas besoin de patcher discord.
     vesktop
+    discord
 
-    # Cohérence GTK/Qt, nécessaire pour que le template Qt s'applique à VLC
     libsForQt5.qt5ct
     qt6Packages.qt6ct
     adwaita-icon-theme
@@ -72,24 +69,26 @@ in
     fastfetch
     affine
 
-    # Moniteur système GTK. Il affiche aussi les GPU : l'Arc, et la RTX 4070
-    # quand l'eGPU est branché. Le paquet embarque le moteur de nvtop et passe
-    # par addDriverRunpath, il trouve donc seul la bibliothèque NVML du pilote.
+    teleport
+    
+    freecad
+
+    bottles
+    wineWowPackages.stable
+    winetricks
+    
+    piper
+   
+    r2modman
+
     mission-center
 
-    # Déclaration du type *.zed pour l'hôte (cf. le let ci-dessus). Ce n'est
-    # pas un paquet pkgs mais une liaison du let : elle a priorité sur le
-    # « with pkgs » de cette liste.
     zedMimeType
 
-    # update-desktop-database : absent du système jusqu'ici (xdg-mime et
-    # xdg-open, eux, arrivent déjà par une dépendance transitive du portail).
-    # Il est nécessaire après « distrobox-export », pour régénérer le
-    # mimeinfo.cache de ~/.local/share/applications. Sans ce cache, une appli
-    # exportée reste absente de la liste « Ouvrir avec » de Nautilus, même
-    # quand son .desktop déclare bien le MimeType.
     desktop-file-utils
   ];
+
+  services.ratbagd.enable = true;
 
   ###########################################################################
   # Mission Center — « Enabling Additional Values »

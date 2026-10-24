@@ -3,6 +3,20 @@
 
 let
   username = config.my.username;
+
+  pkgsWithOldDisplayInfo = pkgs.extend (final: prev: {
+    libdisplay-info_0_2 = prev.libdisplay-info.overrideAttrs {
+      version = "0.2.0";
+      src = prev.fetchFromGitLab {
+        domain = "gitlab.freedesktop.org";
+        owner = "emersion";
+        repo = "libdisplay-info";
+        rev = "0.2.0";
+        hash = "sha256-6xmWBrPHghjok43eIDGeshpUEQTuwWLXNHg7CnBUt3Q=";
+      };
+    };
+  });
+  niriPkgs = inputs.niri.overlays.niri pkgsWithOldDisplayInfo pkgsWithOldDisplayInfo;
 in
 {
   imports = [ inputs.piri.nixosModules.piri ];
@@ -27,7 +41,15 @@ in
     # libinput ne reçoit aucun événement du contrôleur FTSC1000, donc le
     # problème est sous le compositeur — voir les erreurs I2C
     # « failed to get a report from device: -5 » au démarrage.
-    package = inputs.niri.packages.${pkgs.stdenv.hostPlatform.system}.niri-stable;
+    #
+    # niri-flake fige niri 25.08, qui exige libdisplay-info 0.2.0 (assertion).
+    # nixpkgs a supprimé libdisplay-info_0_2 et ne garde que la 0.4 : on la
+    # reconstruit ici. À retirer quand niri-flake passera à une version qui
+    # accepte la libdisplay-info de nixpkgs.
+    # `.override` ne marche pas ici : il force d'abord l'assertion avec
+    # l'alias qui lève l'erreur. On passe donc par l'overlay du flake, appliqué
+    # sur un pkgs où libdisplay-info_0_2 est redéfini.
+    package = niriPkgs.niri-stable;
   };
 
   # piri tourne en service utilisateur (démarré avec graphical-session.target)

@@ -20,7 +20,17 @@
   #############################################################################
 
   # Meteor Lake profite encore de correctifs récents (xe, SOF, IPU6, VPU).
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  #
+  # v4l2loopback 0.15.4 (tiré par hardware.ipu6) installe ses propres
+  # modules.* et entre en conflit avec ceux du noyau dans buildEnv. On les
+  # retire. À supprimer quand nixpkgs corrigera le paquet.
+  boot.kernelPackages = pkgs.linuxPackages_latest.extend (self: super: {
+    v4l2loopback = super.v4l2loopback.overrideAttrs (old: {
+      postInstall = old.postInstall + ''
+        rm -f $out/lib/modules/*/modules.*
+      '';
+    });
+  });
 
   hardware.enableAllFirmware = true;
   hardware.cpu.intel.updateMicrocode = true;

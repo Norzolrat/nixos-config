@@ -67,6 +67,14 @@ output "HDMI-A-1" {
     position x=1920 y=0
 }
 
+// Iiyama PL3266Q sur l'eGPU (DP-6). Sans bloc dédié, niri prend le mode
+// préféré, soit 60 Hz.
+output "DP-6" {
+    mode "2560x1440@143.912"
+    scale 1.0
+    position x=1920 y=0
+}
+
 // ESSENTIEL — ne pas retirer. niri énumère toutes les cartes DRM et en choisit
 // une comme GPU de rendu ; cette ligne le fixe sur l'iGPU Arc.
 //
