@@ -145,6 +145,23 @@ in
       extraLibraries = p: with p; [ gamemode ];
     })
     hytale
+
+    # Minecraft : Prism gère les comptes Microsoft, Java (21/17/8 fournis par
+    # le paquet) et les modpacks, dont l'import des .zip de CurseForge.
+    # Même lanceur que Heroic : GPU choisi au démarrage (offloadIfEgpu), à
+    # quitter avant de débrancher le dock. Les instances héritent de
+    # l'environnement, donc le jeu tourne aussi sur la 4070.
+    (pkgs.symlinkJoin {
+      name = "prismlauncher-egpu";
+      paths = [ pkgs.prismlauncher ];
+      postBuild = ''
+        rm $out/bin/prismlauncher
+        ln -s ${pkgs.writeShellScript "prismlauncher" ''
+          ${offloadIfEgpu}
+          exec ${pkgs.prismlauncher}/bin/prismlauncher "$@"
+        ''} $out/bin/prismlauncher
+      '';
+    })
   ];
 
   #############################################################################
@@ -171,7 +188,11 @@ in
       location = "https://dl.flathub.org/repo/flathub.flatpakrepo";
     }];
 
-    packages = [ "org.vinegarhq.Sober" ];
+    # CurseForge : pas de paquet nixpkgs, seulement le Flatpak Overwolf. Il
+    # n'est pas forcé sur la 4070 (un override Flatpak est statique, donc il
+    # casserait GL sans eGPU) : pour jouer sur l'eGPU, lance l'instance
+    # depuis Prism, qui sait importer les modpacks CurseForge.
+    packages = [ "org.vinegarhq.Sober" "com.overwolf.curseforge" ];
 
     # Mise à jour manuelle (flatpak update) plutôt qu'automatique : Sober sort
     # ses propres versions au rythme de Roblox, autant garder la main sur le
